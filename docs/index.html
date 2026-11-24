@@ -1,0 +1,632 @@
+<!DOCTYPE html><html lang="kk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>BLACKOUT — AI Escape Room</title>
+<style>
+:root{--bg:#06080c;--fg:#d8e6f0;--ac:#3fe0ff;--rd:#ff4d5e;--pn:rgba(8,14,22,.8);box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#06080c;--fg:#d8e6f0}}
+:root[data-theme="dark"]{--bg:#06080c;--fg:#d8e6f0}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);font:13px/1.45 system-ui,"Segoe UI",sans-serif;overflow:hidden}
+#c{position:fixed;inset:0;width:100%;height:100%}
+.p{position:fixed;background:var(--pn);border:1px solid #1d3a4a;border-radius:8px;padding:8px 10px}
+#cl{left:10px;top:10px;width:250px}#ai{left:10px;bottom:10px;width:330px;font-size:12px}
+#mp{right:10px;top:10px;padding:4px}#mp canvas{display:block}
+h4{margin:0 0 4px;color:var(--ac);font-size:12px;letter-spacing:.08em}
+#pr{left:50%;bottom:14%;transform:translateX(-50%);display:none;color:var(--ac)}
+#cr{position:fixed;left:50%;top:50%;width:6px;height:6px;margin:-3px;border-radius:50%;background:#fff8;pointer-events:none}
+#st{height:5px;background:#123;margin-top:6px}#st i{display:block;height:100%;background:var(--ac);width:100%}
+#ov,#ip{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(3,6,10,.88);text-align:center;padding:20px}
+#ip{display:none}h1{margin:0 0 8px;font-size:38px;letter-spacing:.2em;color:var(--ac)}
+button,input{font:inherit;font-size:18px;padding:10px 22px;border-radius:6px;border:1px solid var(--ac);background:#0a1a24;color:var(--fg)}
+button{cursor:pointer;margin-top:14px}input{width:140px;text-align:center;letter-spacing:.4em}
+#ov p{max-width:560px;margin:4px}#tt{position:fixed;left:50%;top:18%;transform:translateX(-50%);color:var(--rd);font-size:16px;text-shadow:0 0 8px #000}
+.k{color:var(--ac)}
+body.m #cl,body.m #mp,body.m #ai,body.m #cr,body.m #pr{display:none}
+#mn{position:fixed;inset:0;z-index:5;display:none;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:radial-gradient(ellipse at 50% 30%,#0e2230,#020406 70%);overflow:auto;padding:16px;text-align:center}
+#mn button{width:330px;margin:0}#mn .row{display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap}#mn .row button{width:auto;font-size:15px;padding:8px 14px}
+#mn input[type=range]{width:300px;padding:0;letter-spacing:0;border:0}#mn input[type=checkbox]{width:auto;padding:0;font-size:inherit}
+#mn select{font:inherit;font-size:15px;padding:6px;background:#0a1a24;color:var(--fg);border:1px solid var(--ac)}#mn small{opacity:.7;max-width:600px;margin-top:10px}#mn label{display:block;margin:4px}
+
+/* Qairu Blackout — жаңартылған басты мәзір */
+#mn{
+  background:
+    radial-gradient(ellipse at 18% 55%,rgba(20,54,70,.38),transparent 42%),
+    linear-gradient(115deg,#03070b 0%,#07111a 48%,#020406 100%);
+  align-items:stretch;justify-content:center;padding:clamp(14px,3vw,42px);
+}
+#mn .menu-layout{
+  width:min(1120px,100%);min-height:min(680px,92vh);
+  display:grid;grid-template-columns:minmax(280px,1.05fr) minmax(320px,.95fr);
+  align-items:center;gap:clamp(14px,4vw,54px);margin:auto;
+}
+#mn .menu-monster{
+  position:relative;min-height:500px;height:min(72vh,680px);
+  display:flex;align-items:center;justify-content:center;overflow:hidden;
+  background:radial-gradient(ellipse at 50% 60%,rgba(29,83,105,.22),transparent 58%);
+}
+#mn .menu-monster:after{
+  content:"";position:absolute;bottom:7%;left:17%;right:17%;height:22px;
+  background:#000;filter:blur(18px);border-radius:50%;
+}
+#mn .monster-art{height:96%;width:100%;max-width:500px;position:relative;z-index:1;
+  filter:drop-shadow(0 0 22px rgba(37,174,210,.17));animation:monsterBreath 5s ease-in-out infinite}
+#mn .monster-eye{animation:eyePulse 3.4s ease-in-out infinite}
+#mn .menu-panel{
+  width:100%;max-width:470px;margin:auto;padding:clamp(20px,3vw,38px);
+  border:1px solid rgba(70,180,205,.25);border-radius:18px;
+  background:linear-gradient(145deg,rgba(8,19,29,.94),rgba(3,8,13,.96));
+  box-shadow:0 22px 80px #0009,inset 0 1px #b9f5ff0c;
+  backdrop-filter:blur(12px);text-align:center;
+}
+#mn .menu-panel h1{font-size:clamp(32px,4vw,48px);letter-spacing:.22em;
+  text-shadow:0 0 24px rgba(63,224,255,.28);margin-bottom:20px}
+#mn .menu-panel>button{width:100%;max-width:330px;margin:7px auto;padding:12px 18px;
+  border-radius:9px;background:linear-gradient(110deg,#0b202b,#102d3a);
+  border-color:#286176;transition:transform .18s,border-color .18s,background .18s}
+#mn .menu-panel>button:hover{transform:translateY(-2px);border-color:var(--ac);
+  background:linear-gradient(110deg,#123342,#17475a)}
+#mn .menu-panel .row{margin:9px 0}
+#mn .menu-panel .row button{border-radius:8px}
+#mn .menu-panel small{display:block;line-height:1.6}
+@keyframes monsterBreath{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-5px) scale(1.012)}}
+@keyframes eyePulse{0%,100%{opacity:.65}50%{opacity:1;filter:drop-shadow(0 0 9px #5ceaff)}}
+@media(max-width:760px){
+ #mn .menu-layout{grid-template-columns:1fr;gap:0;min-height:auto}
+ #mn .menu-monster{min-height:210px;height:27vh;max-height:270px}
+ #mn .monster-art{height:115%;width:auto}
+ #mn .menu-panel{padding:18px 14px}
+ #mn .menu-panel h1{font-size:30px;margin-bottom:12px}
+}
+
+#mn .menu-layout.set{grid-template-columns:1fr}
+#mn .menu-layout.set .menu-monster{display:none}
+#mn .menu-panel.wide{max-width:700px}
+#mn .tabs{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px;padding:5px;background:#050d14;border:1px solid #16303d;border-radius:12px}
+#mn .tabs button{width:auto;margin:0;flex:1 1 auto;font-size:14px;padding:9px 12px;border:0;border-radius:8px;background:transparent;color:#8fb2c0}
+#mn .tabs button.on{background:#12394a;color:#fff;box-shadow:inset 0 -2px var(--ac)}
+#mn .tabbody{text-align:left;min-height:300px;display:flex;flex-direction:column;gap:14px;padding:6px 2px}
+#mn .tabbody h3{margin:0;font-size:13px;letter-spacing:.1em;color:var(--ac)}
+#mn .fld{display:flex;flex-direction:column;gap:6px}
+#mn .fld label{display:flex;justify-content:space-between;margin:0;font-size:14px}
+#mn .fld b{color:var(--ac)}
+#mn .fld select{width:100%;font-size:15px;padding:9px;border-radius:8px}
+#mn .fld input[type=range]{width:100%}
+#mn .sw{display:flex;align-items:center;gap:10px;margin:0;cursor:pointer;font-size:14px;position:relative}
+#mn .sw input{position:absolute;opacity:0}
+#mn .sw i{width:42px;height:22px;border-radius:12px;background:#17303c;border:1px solid #2b5566;position:relative;flex:none;transition:.2s}
+#mn .sw i:after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#8fb2c0;transition:.2s}
+#mn .sw input:checked+i{background:#0f5f78;border-color:var(--ac)}
+#mn .sw input:checked+i:after{left:22px;background:#fff}
+#mn .keys{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+#mn .key{width:auto;margin:0;display:flex;justify-content:space-between;align-items:center;font-size:14px;padding:9px 12px;border-radius:8px}
+#mn .key kbd{font:600 13px ui-monospace,Consolas,monospace;padding:3px 9px;border-radius:5px;background:#05121a;border:1px solid var(--ac);color:var(--ac);min-width:34px;text-align:center}
+#mn .key.wait{border-color:#ffd166}#mn .key.wait kbd{color:#ffd166;border-color:#ffd166}
+#mn .card{border:1px solid #1d3a4a;border-radius:12px;padding:12px;background:#07141d;display:flex;flex-direction:column;gap:10px}
+#mn .gps{display:flex;align-items:center;gap:8px;font-size:14px}
+#mn .gps i{width:10px;height:10px;border-radius:50%;background:#ff4d5e;flex:none}
+#mn .gps.ok i{background:#4dff88;box-shadow:0 0 8px #4dff88}
+#mn .seg{display:flex;gap:6px}
+#mn .seg button,#mn .lang{width:auto;margin:0;flex:1;font-size:14px;padding:9px;border-radius:8px}
+#mn .seg button.on,#mn .lang.on{background:#12394a;border-color:var(--ac);color:#fff}
+#mn .langs{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+#mn .lang{font-size:18px;padding:18px}
+#mn .bar{display:flex;gap:10px;margin-top:14px}
+#mn .bar button{flex:1;width:auto;margin:0;font-size:15px;padding:11px;border-radius:8px}
+#mn .bar .pri{background:#0e6a85;border-color:var(--ac);color:#fff}
+#mn .bar .ghost{background:transparent}
+#mn .foot{display:flex;justify-content:space-between;min-height:20px;margin:8px 2px;font-size:13px;color:#ffd166}
+#mn .foot #fl{color:#4dff88}
+/* ===== кинематографичные вставки ===== */
+#sc{position:fixed;inset:0;z-index:10000;background:#000;color:#eaf4fa;font-family:"Segoe UI",system-ui,sans-serif;overflow:hidden;user-select:none;cursor:pointer;opacity:0;transition:opacity .8s}
+#sc.on{opacity:1}
+#sc .bg{position:absolute;inset:-3%;background-size:cover;background-position:center;opacity:0;transition:opacity 1.1s ease;will-change:transform,opacity}
+#sc .bg.show{opacity:1}
+#sc .bg.k0{animation:kb0 26s ease-out forwards}#sc .bg.k1{animation:kb1 26s ease-out forwards}
+#sc .bg.k2{animation:kb2 26s ease-out forwards}#sc .bg.k3{animation:kb3 26s ease-out forwards}
+@keyframes kb0{from{transform:scale(1.02)}to{transform:scale(1.13) translate(-1.5%,-1%)}}
+@keyframes kb1{from{transform:scale(1.12) translate(1.5%,0)}to{transform:scale(1.03)}}
+@keyframes kb2{from{transform:scale(1.03) translate(0,1.2%)}to{transform:scale(1.12) translate(1%,-1%)}}
+@keyframes kb3{from{transform:scale(1.12) translate(-1%,0)}to{transform:scale(1.04) translate(1%,1%)}}
+#sc .vig{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 42%,transparent 38%,rgba(0,0,0,.55) 80%,rgba(0,0,0,.9) 100%),linear-gradient(to top,rgba(2,6,10,.95) 0,rgba(2,6,10,.72) 24%,transparent 52%),linear-gradient(to bottom,rgba(2,6,10,.7),transparent 18%)}
+#sc .grain{position:absolute;inset:-50%;pointer-events:none;opacity:.09;mix-blend-mode:overlay;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");animation:grain .6s steps(6) infinite}
+@keyframes grain{0%{transform:translate(0,0)}20%{transform:translate(-3%,2%)}40%{transform:translate(2%,-3%)}60%{transform:translate(-2%,-1%)}80%{transform:translate(3%,3%)}100%{transform:translate(0,0)}}
+#sc .scan{position:absolute;inset:0;pointer-events:none;opacity:.12;background:repeating-linear-gradient(to bottom,transparent 0,transparent 2px,rgba(0,0,0,.6) 3px)}
+#sc .fx{position:absolute;inset:0;pointer-events:none;opacity:0}
+#sc.red .fx{background:radial-gradient(ellipse at center,transparent 40%,rgba(255,30,50,.38));animation:pulse 2.6s ease-in-out infinite}
+#sc.glitch .bg.show{animation-name:kb2,glt;animation-duration:26s,5s;animation-iteration-count:1,infinite}
+@keyframes pulse{0%,100%{opacity:.25}50%{opacity:1}}
+@keyframes glt{0%,92%,100%{filter:none}93%{filter:hue-rotate(60deg) saturate(2) contrast(1.3)}95%{filter:none;transform:translateX(8px)}97%{filter:hue-rotate(-60deg) brightness(1.4)}}
+#sc .top{position:absolute;left:0;right:0;top:0;display:flex;align-items:center;gap:18px;padding:max(18px,2.6vh) max(22px,3vw);font-size:12px;letter-spacing:.32em;color:#9fd3e4;text-transform:uppercase;pointer-events:none}
+#sc .top .kick{white-space:nowrap}
+#sc .top .bar{flex:1;height:2px;background:rgba(255,255,255,.12);position:relative;overflow:hidden}
+#sc .top .bar i{position:absolute;left:0;top:0;bottom:0;background:var(--ac,#39c9e8);box-shadow:0 0 12px var(--ac,#39c9e8);transition:width .6s}
+#sc .skip{pointer-events:auto;background:rgba(0,0,0,.35);color:#cfe3ee;border:1px solid rgba(255,255,255,.28);padding:8px 16px;border-radius:999px;font-weight:600;font-size:12px;font-family:inherit;letter-spacing:.2em;cursor:pointer;backdrop-filter:blur(4px)}
+#sc .skip:hover{background:rgba(255,255,255,.16);color:#fff}
+#sc .chap{position:absolute;left:2px;top:-34px;font-size:clamp(12px,1.3vw,15px);letter-spacing:.42em;color:var(--ac,#39c9e8);text-transform:uppercase;text-shadow:0 2px 14px #000;opacity:0;transform:translateY(8px);transition:.7s;white-space:nowrap}
+#sc .chap.in{opacity:1;transform:none}
+#sc .box{position:absolute;left:50%;bottom:max(26px,5.5vh);transform:translateX(-50%);width:min(1120px,92vw);min-height:clamp(120px,22vh,190px);padding:clamp(16px,2.6vh,28px) clamp(20px,2.8vw,40px);background:linear-gradient(135deg,rgba(6,14,22,.78),rgba(4,9,15,.62));border:1px solid rgba(255,255,255,.1);border-left:3px solid var(--ac,#39c9e8);border-radius:6px 16px 16px 6px;box-shadow:0 18px 60px rgba(0,0,0,.6),0 0 40px color-mix(in srgb,var(--ac,#39c9e8) 22%,transparent);backdrop-filter:blur(10px);transition:opacity .5s}
+#sc .box.hide{opacity:0}
+#sc .name{font-size:clamp(12px,1.25vw,15px);font-weight:800;letter-spacing:.3em;margin-bottom:10px;text-transform:uppercase}
+#sc .name:empty{display:none}
+#sc .txt{font-size:clamp(17px,1.95vw,25px);line-height:1.55;color:#f1f8fc;text-shadow:0 2px 10px rgba(0,0,0,.7)}
+#sc .txt.n{color:#c3d3dd;font-style:italic}
+#sc .txt.s{font-family:Consolas,"Courier New",monospace;color:#bff3ff}
+#sc .txt.q::before{content:"“";color:var(--ac,#39c9e8);margin-right:2px}#sc .txt.q::after{content:"”";color:var(--ac,#39c9e8)}
+#sc .txt .cur{display:inline-block;width:.55em;height:1em;vertical-align:-.12em;margin-left:3px;background:var(--ac,#39c9e8);animation:blink .8s steps(2) infinite}
+@keyframes blink{50%{opacity:0}}
+#sc .more{position:absolute;right:22px;bottom:12px;font-size:12px;letter-spacing:.2em;color:var(--ac,#39c9e8);opacity:.0;animation:nudge 1.2s ease-in-out infinite}
+#sc .more.on{opacity:.9}
+@keyframes nudge{0%,100%{transform:translateY(0)}50%{transform:translateY(5px)}}
+#sc .hint{position:absolute;right:max(22px,3vw);bottom:max(6px,1.2vh);font-size:11px;letter-spacing:.2em;color:#7d97a6;pointer-events:none}
+#sc .card{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:radial-gradient(ellipse at center,rgba(0,4,8,.55),rgba(0,0,0,.9));opacity:0;pointer-events:none;transition:opacity 1.2s}
+#sc .card.on{opacity:1;pointer-events:auto}
+#sc .card h1{margin:0;font-size:clamp(44px,10vw,150px);font-weight:200;letter-spacing:.35em;padding-left:.35em;color:#f4fbff;text-shadow:0 0 40px var(--ac,#39c9e8),0 0 90px rgba(57,201,232,.45);animation:tin 3.2s ease-out both}
+#sc .card p{margin:22px 0 0;font-size:clamp(12px,1.5vw,18px);letter-spacing:.7em;padding-left:.7em;color:var(--ac,#39c9e8);text-transform:uppercase;animation:tin2 3.6s ease-out both}
+@keyframes tin{from{letter-spacing:1.1em;opacity:0;filter:blur(12px)}to{letter-spacing:.35em;opacity:1;filter:none}}
+@keyframes tin2{0%,35%{opacity:0}100%{opacity:1}}
+</style></head><body class="m">
+<canvas id="c"></canvas><div id="cr"></div><div id="tt"></div>
+<div class="p" id="cl"><h4>ШИФР ШЕШУ · CSP</h4><div id="lv" style="color:#ffd166"></div><div id="cc"></div><div id="cs"></div><div id="st"><i></i></div></div>
+<div class="p" id="mp"><canvas id="m" width="190" height="190"></canvas></div>
+<div class="p" id="ai"></div><div class="p" id="pr"></div>
+<div id="ip"><h1>КОД</h1><p>4 санды енгізіңіз (A B C D)</p><input id="in" maxlength="4" inputmode="numeric"><button id="ok">ЕНГІЗУ</button></div>
+<div id="ov" style="display:none"><h1>BLACKOUT</h1><p>Сен қараңғы кешенде қамалып қалдың. <b>Терминалдарды</b> тап — әрқайсысы кодтың бір шартын ашады. Шектеулер есебін (CSP) шешіп, қызыл есікке кодты енгіз. <b>6 деңгей</b>, әрқайсысы қиынырақ.</p>
+<p>Күзетшілер сені іздейді: <span class="k">Байес сүзгісі (HMM)</span> сенің қайда екеніңді бағалайды, ал <span class="k">A*</span> оған жол салады. Жүгіру шу шығарады — күзетші «естиді».</p>
+<p><b>WASD</b> — жүру · <b>тышқан</b> — қарау · <b>Shift</b> — жүгіру · <b>Alt</b> — тыныш жүру · <b>E</b> — әрекет · <b>Tab</b> — ЖИ «миы»</p>
+<p id="tr" style="color:#7f9"></p><button id="go">ОЙНАУ</button><button id="mb" style="display:block">БАСТЫ МӘЗІР</button></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>if(typeof THREE==="undefined"){document.addEventListener("DOMContentLoaded",function(){document.body.insertAdjacentHTML("beforeend","<div style=\"position:fixed;inset:0;z-index:99;display:flex;align-items:center;justify-content:center;background:#06080c;color:#ff4d5e;font:20px system-ui;text-align:center;padding:20px\">three.js жүктелмеді. Интернетті тексеріңіз және ойынды қайта іске қосыңыз.<br>Не удалось загрузить three.js — проверьте интернет и перезапустите игру.<br>Failed to load three.js — check your internet connection and restart the game.</div>")})}</script>
+<script>
+/* ===== BLACKOUT: игровые тексты на 4 языках (kk / ru / en / zh) ===== */
+const GT={
+kk:{odd:'тақ сан',even:'жұп сан',cl_title:'ШИФР ШЕШУ · CSP',ip_h:'КОД',ip_p:'{n} санды енгізіңіз',ok:'ЕНГІЗУ',mb:'БАСТЫ МӘЗІР',
+m_chase:'ҚУУДА',m_search:'ІЗДЕУДЕ',m_heard:'ДЫБЫС ЕСТІДІ',
+lvt:['Ояну','Лабиринт','Із кесу','Қос күзет','Қараңғы аймақ','Соңғы қашу'],
+lvr:['Сақшы','Жүкші','Скальпель','Жаңғырық','Қысқыш / Көлеңке','Жазалаушы / Прометей-0'],
+lvl_toast:'ҚАБАТ {n}: {t} · {r}',
+cc_ciph:'Көк шифрлар',cc_cond:'Шарттар',cc_none:'Әзірге із жоқ',cc_cand:'Код үміткерлері',
+gen_run:'Генератор іске қосылуда… {t} с',gen_press:'{k} — генераторды іске қосу',ciph_run:'Көк шифр ашылуда… {t} с',ciph_press:'{k} — көк шифрды ашу',door_press:'{k} — есік кодын енгізу',
+hud:'ДЕҢГЕЙ {l}/{m} · ⏱ {s} с · Ген: {g}/{gm} · Шифр: {c}/{cm}',
+ai_h:'КҮЗЕТШІ МИЫ',ai_l1:'Байес сүзгісі (HMM): болжау → жаңарту (көру, есту) → argmax',ai_l2:'Мақсат: ұяшық ({g}) · A*: {s} қадам, {n} түйін ашылды',ai_st:'Стиль',st_q:'тыныш қадам',st_r:'жүгіру',st_w:'жүру',ai_r2:'2-робот: жолды болжау',ai_r1:'1-робот: A* қуу',ai_cf:'Белгісіздік',ai_bit:'бит',ai_tab:'{k} — сенім картасы',
+t_gs:'Генератор іске қосылуда…',t_cs:'Көк шифр ашылуда…',t_np:'Ток жоқ! Генераторлар: {a}/{b}',t_wr:'Қате! Дабыл — күзетші есікке асығуда',t_go:'Генератор қосылды! {a}/{b}',t_co:'Көк шифр ашылды: {n} шарт',
+e_fh:'{n}-ҚАБАТ ӨТТІ',e_ft:'Код дұрыс: {v}. CSP шешімі кері іздеу (backtracking) арқылы табылды.',b_next:'КЕЛЕСІ ҚАБАТ',e_wt:'Код қате. Дабыл күзетшіні есікке шақырды — оның сенімі шығысқа ауысты.',b_cont:'ЖАЛҒАСТЫРУ',e_lh:'ҰСТАЛДЫҢ',e_lt:'Күзетші белгісіздікті нөлге жеткізді… Ол сені тапты.',b_retry:'ҚАЙТАЛАУ',e_time:'Уақыт бітті — жүйе бұғатталды.',pause:'ПАУЗА',e_pt:'Ойын кідіртілді.',e_dh:'МИССИЯ АЯҚТАЛДЫ',e_dt:'FBI доктор Арман Рахимовты тұтқындады. «Прометей» жобасы тоқтатылды.',b_menu:'МӘЗІРГЕ ҚАЙТУ',selftest:'Өзіндік тесттер'},
+ru:{odd:'нечётное число',even:'чётное число',cl_title:'РЕШЕНИЕ ШИФРА · CSP',ip_h:'КОД',ip_p:'Введите код из {n} цифр',ok:'ВВОД',mb:'ГЛАВНОЕ МЕНЮ',
+m_chase:'ПОГОНЯ',m_search:'ПОИСК',m_heard:'СЛЫШИТ ШУМ',
+lvt:['Пробуждение','Лабиринт','Перехват следа','Двойной караул','Тёмная зона','Последний побег'],
+lvr:['Сторож','Грузчик','Скальпель','Эхо','Клешня / Тень','Каратель / Прометей-0'],
+lvl_toast:'ЭТАЖ {n}: {t} · {r}',
+cc_ciph:'Синие шифры',cc_cond:'Условия',cc_none:'Пока нет следов',cc_cand:'Кандидатов кода',
+gen_run:'Генератор запускается… {t} с',gen_press:'{k} — запустить генератор',ciph_run:'Синий шифр вскрывается… {t} с',ciph_press:'{k} — вскрыть синий шифр',door_press:'{k} — ввести код двери',
+hud:'УРОВЕНЬ {l}/{m} · ⏱ {s} с · Ген: {g}/{gm} · Шифр: {c}/{cm}',
+ai_h:'МОЗГ СТОРОЖА',ai_l1:'Байесовский фильтр (HMM): прогноз → обновление (зрение, слух) → argmax',ai_l2:'Цель: клетка ({g}) · A*: {s} шагов, раскрыто узлов: {n}',ai_st:'Стиль',st_q:'тихий шаг',st_r:'бег',st_w:'ходьба',ai_r2:'Робот 2: предсказание пути',ai_r1:'Робот 1: погоня A*',ai_cf:'Неопределённость',ai_bit:'бит',ai_tab:'{k} — карта уверенности',
+t_gs:'Генератор запускается…',t_cs:'Синий шифр вскрывается…',t_np:'Нет тока! Генераторы: {a}/{b}',t_wr:'Ошибка! Тревога — сторож спешит к двери',t_go:'Генератор включён! {a}/{b}',t_co:'Синий шифр вскрыт: условий — {n}',
+e_fh:'ЭТАЖ {n} ПРОЙДЕН',e_ft:'Код верный: {v}. Решение CSP найдено перебором с возвратом (backtracking).',b_next:'СЛЕДУЮЩИЙ ЭТАЖ',e_wt:'Код неверный. Тревога позвала сторожа к двери — его уверенность сместилась к выходу.',b_cont:'ПРОДОЛЖИТЬ',e_lh:'ВАС ПОЙМАЛИ',e_lt:'Сторож свёл неопределённость к нулю… Он нашёл тебя.',b_retry:'ЕЩЁ РАЗ',e_time:'Время вышло — система заблокирована.',pause:'ПАУЗА',e_pt:'Игра приостановлена.',e_dh:'МИССИЯ ВЫПОЛНЕНА',e_dt:'ФБР арестовало доктора Армана Рахимова. Проект «Прометей» остановлен.',b_menu:'В МЕНЮ',selftest:'Самотесты'},
+en:{odd:'odd number',even:'even number',cl_title:'CIPHER SOLVER · CSP',ip_h:'CODE',ip_p:'Enter the {n}-digit code',ok:'ENTER',mb:'MAIN MENU',
+m_chase:'CHASING',m_search:'SEARCHING',m_heard:'HEARD A SOUND',
+lvt:['Awakening','Labyrinth','Cutting the Trail','Double Watch','Dark Zone','Final Escape'],
+lvr:['Warden','Hauler','Scalpel','Echo','Pincer / Shadow','Enforcer / Prometheus-0'],
+lvl_toast:'FLOOR {n}: {t} · {r}',
+cc_ciph:'Blue ciphers',cc_cond:'Clues',cc_none:'No clues yet',cc_cand:'Code candidates',
+gen_run:'Generator starting… {t} s',gen_press:'{k} — start generator',ciph_run:'Blue cipher unlocking… {t} s',ciph_press:'{k} — unlock blue cipher',door_press:'{k} — enter door code',
+hud:'LEVEL {l}/{m} · ⏱ {s} s · Gen: {g}/{gm} · Cipher: {c}/{cm}',
+ai_h:"GUARD'S BRAIN",ai_l1:'Bayes filter (HMM): predict → update (sight, hearing) → argmax',ai_l2:'Target: cell ({g}) · A*: {s} steps, {n} nodes expanded',ai_st:'Movement',st_q:'sneaking',st_r:'running',st_w:'walking',ai_r2:'Robot 2: path prediction',ai_r1:'Robot 1: A* pursuit',ai_cf:'Uncertainty',ai_bit:'bits',ai_tab:'{k} — belief map',
+t_gs:'Generator starting…',t_cs:'Blue cipher unlocking…',t_np:'No power! Generators: {a}/{b}',t_wr:'Wrong! Alarm — the guard is rushing to the door',t_go:'Generator online! {a}/{b}',t_co:'Blue cipher unlocked: {n} clues',
+e_fh:'FLOOR {n} CLEARED',e_ft:'Correct code: {v}. The CSP was solved by backtracking search.',b_next:'NEXT FLOOR',e_wt:'Wrong code. The alarm called the guard to the door — its belief shifted toward the exit.',b_cont:'CONTINUE',e_lh:'CAUGHT',e_lt:'The guard reduced its uncertainty to zero… It found you.',b_retry:'TRY AGAIN',e_time:'Time is up — the system is locked.',pause:'PAUSED',e_pt:'Game paused.',e_dh:'MISSION COMPLETE',e_dt:'The FBI arrested Dr. Arman Rakhimov. Project PROMETHEUS has been shut down.',b_menu:'BACK TO MENU',selftest:'Self-tests'},
+zh:{odd:'奇数',even:'偶数',cl_title:'密码破解 · CSP',ip_h:'密码',ip_p:'请输入 {n} 位密码',ok:'确认',mb:'主菜单',
+m_chase:'追击中',m_search:'搜索中',m_heard:'听到声响',
+lvt:['苏醒','迷宫','截断足迹','双重警戒','黑暗区','最终逃脱'],
+lvr:['守卫','搬运者','手术刀','回声','钳爪 / 暗影','执行者 / 普罗米修斯-0'],
+lvl_toast:'第 {n} 层：{t} · {r}',
+cc_ciph:'蓝色密码',cc_cond:'线索',cc_none:'暂无线索',cc_cand:'候选密码',
+gen_run:'发电机启动中… {t} 秒',gen_press:'{k} — 启动发电机',ciph_run:'蓝色密码解锁中… {t} 秒',ciph_press:'{k} — 解锁蓝色密码',door_press:'{k} — 输入门锁密码',
+hud:'关卡 {l}/{m} · ⏱ {s} 秒 · 发电机：{g}/{gm} · 密码：{c}/{cm}',
+ai_h:'守卫之脑',ai_l1:'贝叶斯滤波 (HMM)：预测 → 更新（视觉、听觉）→ argmax',ai_l2:'目标：格子 ({g}) · A*：{s} 步，展开 {n} 个节点',ai_st:'动作',st_q:'潜行',st_r:'奔跑',st_w:'行走',ai_r2:'机器人 2：预测路线',ai_r1:'机器人 1：A* 追击',ai_cf:'不确定度',ai_bit:'比特',ai_tab:'{k} — 信念地图',
+t_gs:'发电机启动中…',t_cs:'蓝色密码解锁中…',t_np:'没有电力！发电机：{a}/{b}',t_wr:'错误！警报——守卫正赶往门口',t_go:'发电机已启动！{a}/{b}',t_co:'蓝色密码已解锁：{n} 条线索',
+e_fh:'第 {n} 层通过',e_ft:'密码正确：{v}。CSP 已通过回溯搜索求解。',b_next:'下一层',e_wt:'密码错误。警报把守卫引向了门口——它的判断转向出口。',b_cont:'继续',e_lh:'被抓住了',e_lt:'守卫把不确定度降到了零……它找到了你。',b_retry:'重试',e_time:'时间到——系统已锁定。',pause:'暂停',e_pt:'游戏已暂停。',e_dh:'任务完成',e_dt:'联邦调查局逮捕了阿尔曼·拉希莫夫博士。“普罗米修斯”项目已被终止。',b_menu:'返回菜单',selftest:'自检'}
+};
+const tg=(k,o)=>{let l='kk';try{l=SET.lang||'kk'}catch(e){}const s=(GT[l]&&GT[l][k]!=null)?GT[l][k]:(GT.kk[k]!=null?GT.kk[k]:k);return(o&&typeof s==='string')?s.replace(/\{(\w+)\}/g,(m,a)=>o[a]!=null?o[a]:m):s};
+const KL=a=>keyLabel(SET.keys[a]);
+function applyLangStatic(){document.documentElement.lang=SET.lang||'kk';$('cl').querySelector('h4').textContent=tg('cl_title');$('ip').querySelector('h1').textContent=tg('ip_h');$('ok').textContent=tg('ok');$('mb').textContent=tg('mb')}
+</script>
+<script>
+let N=21,L=0,rnd=Math.random;const S=4,$=i=>document.getElementById(i),TL=[420,450,480,510,540,570],GN=[3,4,5,6,7,8],M={get 'ҚУУДА'(){return tg('m_chase')},get 'ІЗДЕУДЕ'(){return tg('m_search')},get 'ДЫБЫС ЕСТІДІ'(){return tg('m_heard')}},LV=[{n:31,g:2.45,c:4.5,r:11,fog:.065,w:0,p:12,t:'Ояну'},{n:35,g:2.7,c:4.8,r:12,fog:.07,w:0,p:11,t:'Лабиринт'},{n:39,g:2.95,c:5.1,r:13,fog:.075,w:0,p:10,t:'Із кесу'},{n:43,g:3.2,c:5.4,r:15,fog:.08,w:1,p:9,t:'Қос күзет'},{n:47,g:3.45,c:5.8,r:17,fog:.09,w:1,p:8,t:'Қараңғы аймақ'},{n:51,g:3.7,c:6.1,r:19,fog:.10,w:1,p:7,t:'Соңғы қашу'}];let g;
+const idx=(x,y)=>y*N+x,open=(x,y)=>x>=0&&y>=0&&x<N&&y<N&&!g[idx(x,y)];
+const nb=(x,y)=>[[1,0],[-1,0],[0,1],[0,-1]].map(([a,b])=>[x+a,y+b]).filter(([a,b])=>open(a,b));
+const cx=c=>(c+.5)*S,cell=o=>({x:Math.floor(o.x/S),y:Math.floor(o.z/S)});
+/* Лабиринт жасау: DFS арқылы қабырғаны бұзу + циклдар */
+function genMaze(){g=new Uint8Array(N*N).fill(1);const st=[[1,1]];g[idx(1,1)]=0;
+ while(st.length){const[x,y]=st[st.length-1];const d=[[2,0],[-2,0],[0,2],[0,-2]].sort(()=>rnd()-.5).filter(([a,b])=>{const X=x+a,Y=y+b;return X>0&&Y>0&&X<N-1&&Y<N-1&&g[idx(X,Y)]});
+ if(!d.length){st.pop();continue}const[a,b]=d[0];g[idx(x+a/2,y+b/2)]=0;g[idx(x+a,y+b)]=0;st.push([x+a,y+b])}
+ for(let k=0;k<N*2;k++){const x=1+(rnd()*(N-2)|0),y=1+(rnd()*(N-2)|0);if(g[idx(x,y)]&&((open(x-1,y)&&open(x+1,y))!==(open(x,y-1)&&open(x,y+1))))g[idx(x,y)]=0}}
+/* BFS: ең қысқа қашықтықтар (A* тексеру және есік орны үшін) */
+function bfs(sx,sy){const D=new Int16Array(N*N).fill(-1),q=[[sx,sy]];D[idx(sx,sy)]=0;for(let i=0;i<q.length;i++){const[x,y]=q[i];for(const[a,b]of nb(x,y))if(D[idx(a,b)]<0){D[idx(a,b)]=D[idx(x,y)]+1;q.push([a,b])}}return D}
+function spreadPick(candidates,count,avoid=[]){const pool=candidates.slice(),picked=avoid.slice();if(!pool.length)return[];const out=[];while(out.length<count&&pool.length){let best=0,score=-1;for(let i=0;i<pool.length;i++){const c=pool[i],d=picked.length?Math.min(...picked.map(p=>Math.hypot(c[0]-p[0],c[1]-p[1]))):Math.random()*N;const s=d+Math.random()*.35;if(s>score){score=s;best=i}}const c=pool.splice(best,1)[0];out.push(c);picked.push(c)}return out}
+// ===== 2-апта: A* алгоритмі =====
+/* A*: f=g+h, h — манхэттен қашықтығы; жол мен ашылған түйін санын қайтарады */
+function astar(sx,sy,tx,ty){const G=new Float32Array(N*N).fill(1e9),P=new Int16Array(N*N).fill(-1),C=new Uint8Array(N*N),h=(x,y)=>Math.abs(x-tx)+Math.abs(y-ty);let O=[[h(sx,sy),sx,sy]],ex=0;G[idx(sx,sy)]=0;
+ while(O.length){let bi=0;for(let i=1;i<O.length;i++)if(O[i][0]<O[bi][0])bi=i;const[,x,y]=O.splice(bi,1)[0],c=idx(x,y);if(C[c])continue;C[c]=1;ex++;
+ if(x==tx&&y==ty){const p=[];for(let k=c;k>=0;k=P[k])p.push([k%N,k/N|0]);return{path:p.reverse(),ex}}
+ for(const[a,b]of nb(x,y)){const n=idx(a,b),ng=G[c]+1;if(ng<G[n]){G[n]=ng;P[n]=c;O.push([ng+h(a,b),a,b])}}}return{path:[[sx,sy]],ex}}
+// ===== 3-апта: CSP (кері іздеу / backtracking) =====
+/* Құпия код үшін ақиқат шарттарды жасау */
+function mkClues(s){const L=[],nm=i=>'ABCD'[i],dn=s.length;
+ for(let i=0;i<dn;i++){L.push({v:[i],get t(){return `${nm(i)} — ${tg(s[i]%2?'odd':'even')}`},f:d=>d[i]%2==s[i]%2});
+ for(let j=0;j<dn;j++){if(j==i)continue;if(s[i]>s[j])L.push({v:[i,j],t:`${nm(i)} > ${nm(j)}`,f:d=>d[i]>d[j]});
+ if(i<j){L.push({v:[i,j],t:`${nm(i)} + ${nm(j)} = ${s[i]+s[j]}`,f:d=>d[i]+d[j]==s[i]+s[j]});L.push(s[i]!=s[j]?{v:[i,j],t:`${nm(i)} ≠ ${nm(j)}`,f:d=>d[i]!=d[j]}:{v:[i,j],t:`${nm(i)} = ${nm(j)}`,f:d=>d[i]==d[j]})}}}
+ const T=s.reduce((a,b)=>a+b,0),vs=s.map((_,i)=>i),names=vs.map(nm).join('+');L.push({v:vs,t:`${names} = ${T}`,f:d=>vs.reduce((a,i)=>a+d[i],0)==T});return L}
+/* Backtracking: цифрларды ретімен қояды, шарт бұзылса тармақты тастайды */
+function solve(cs){const out=[],d=[],dn=L<3?3:4;(function bt(i){if(i==dn){out.push(d.slice());return}for(let x=0;x<10;x++){d[i]=x;if(cs.every(c=>Math.max(...c.v)>i||c.f(d)))bt(i+1)}})(0);return out}
+/* Шарттарды ашкөздікпен таңдау: шешім біреу болғанша */
+function genPuzzle(){for(let a=0;;a++){const s=Array.from({length:L<3?3:4},()=>rnd()*10|0);let pool=mkClues(s).sort(()=>rnd()-.5),cs=[],n=1e4;
+ while(n>1&&cs.length<8){let best=null,bm=n;for(const c of pool.slice(0,a>15?14:LV[L].p)){const m=solve(cs.concat(c)).length;if(m<bm){bm=m;best=c}}if(!best)break;cs.push(best);pool=pool.filter(c=>c!=best);n=bm}
+ if(n==1)return{s,cs}}}
+// ===== 7-апта: Байес сүзгісі / HMM (forward) =====
+let B=new Float32Array(N*N);
+const bInit=()=>{let c=0;for(let i=0;i<N*N;i++)if(!g[i]){B[i]=1;c++}else B[i]=0;for(let i=0;i<N*N;i++)B[i]/=c};
+/* HMM болжау: ойыншы тұрады (0.35) немесе көршіге өтеді */
+function bPredict(){const n=new Float32Array(N*N),stay=Math.max(.18,.35-L*.025),move=1-stay;for(let i=0;i<N*N;i++){if(!B[i])continue;const ns=nb(i%N,i/N|0);n[i]+=B[i]*stay;for(const[a,b]of ns)n[idx(a,b)]+=B[i]*move/ns.length}B=n}
+function bNorm(){let s=0;for(let i=0;i<N*N;i++)s+=B[i];if(s<1e-9)return bInit();for(let i=0;i<N*N;i++)B[i]/=s}
+/* Көру сызығы: арада қабырға бар ма */
+function los(ax,az,bx,bz){const d=Math.hypot(bx-ax,bz-az),n=Math.ceil(d/.6);for(let i=1;i<n;i++){const t=i/n;if(!open(Math.floor((ax+(bx-ax)*t)/S),Math.floor((az+(bz-az)*t)/S)))return false}return true}
+/* HMM жаңарту: көрді → бір ұяшық; көрмеді → көрінетін ұяшық ×0.01; шу → Гаусс */
+function bUpdate(seen,obs){if(seen){B.fill(0);B[idx(pc.x,pc.y)]=1;return}
+ for(let i=0;i<N*N;i++){if(!B[i])continue;const x=i%N,y=i/N|0;if(Math.hypot(x-gc.x,y-gc.y)<=5&&los(gd.x,gd.z,cx(x),cx(y)))B[i]*=.01;
+ if(obs!=null)B[i]*=Math.exp(-((x-obs.x)**2+(y-obs.y)**2)/(2*obs.s*obs.s))+.02+L*.018}bNorm()}
+// ===== өзіндік тесттер =====
+function selfTest(){const r=[];genMaze();const D=bfs(1,1);let ok=true;for(let k=0;k<20;k++){const i=rnd()*N*N|0;if(D[i]<0)continue;if(astar(1,1,i%N,i/N|0).path.length-1!=D[i])ok=false}r.push(['A* = BFS жол ұзындығы бойынша',ok]);
+ const p=genPuzzle();r.push(['CSP: шешім жалғыз әрі дұрыс',(s=>s.length==1&&s[0].join()==p.s.join())(solve(p.cs))]);
+ bInit();bPredict();let t=0;for(const v of B)t+=v;r.push(['Σ ықтималдық = 1',Math.abs(t-1)<1e-4]);return r}
+// ===== 3D =====
+const scene=new THREE.Scene(),cam=new THREE.PerspectiveCamera(75,1,.1,60),R=new THREE.WebGLRenderer({canvas:$('c'),antialias:true});
+scene.background=new THREE.Color(0x04060a);scene.fog=new THREE.FogExp2(0x04060a,.075);cam.rotation.order='YXZ';scene.add(cam);
+scene.add(new THREE.AmbientLight(0x334455,.55));const torch=new THREE.PointLight(0xffe2b0,1.3,20);cam.add(torch);
+function tex(a,b){const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d');x.fillStyle=a;x.fillRect(0,0,64,64);for(let i=0;i<300;i++){x.fillStyle=`rgba(${b},${rnd()*.25})`;x.fillRect(rnd()*64,rnd()*64,2,2)}x.fillStyle='#0006';x.fillRect(0,31,64,2);x.fillRect(31,0,2,32);const t=new THREE.CanvasTexture(c);t.magFilter=THREE.NearestFilter;t.wrapS=t.wrapT=THREE.RepeatWrapping;return t}
+const tw=tex('#3a4654','255,255,255'),tf=tex('#252b33','0,0,0');tf.repeat.set(N,N);
+const fl=new THREE.Mesh(new THREE.PlaneGeometry(N*S,N*S),new THREE.MeshStandardMaterial({map:tf,roughness:.9}));fl.rotation.x=-Math.PI/2;fl.position.set(N*S/2,0,N*S/2);scene.add(fl);
+const ce=fl.clone();ce.rotation.x=Math.PI/2;ce.position.y=3;scene.add(ce);
+let guard2=null,gd2=null,path2=[];const guard=new THREE.Group();const bd=new THREE.Mesh(new THREE.CylinderGeometry(.35,.45,1.7,10),new THREE.MeshStandardMaterial({color:0x1a1c22}));bd.position.y=.85;guard.add(bd);
+const hd=new THREE.Mesh(new THREE.SphereGeometry(.3,12,12),new THREE.MeshStandardMaterial({color:0x222}));hd.position.y=1.95;guard.add(hd);
+for(const s of[-1,1]){const e=new THREE.Mesh(new THREE.SphereGeometry(.07),new THREE.MeshBasicMaterial({color:0xff2030}));e.position.set(.12*s,2,.26);hd.parent.add(e)}
+const gl=new THREE.PointLight(0xff2030,1.2,10);gl.position.y=1.8;guard.add(gl);guard.children.forEach(c=>{if(c.isMesh)c.visible=false});
+const pc2=document.createElement('canvas');pc2.width=128;pc2.height=192;{const x=pc2.getContext('2d');x.fillStyle='#111b24';x.strokeStyle='#8aa5b3';x.lineWidth=5;x.fillRect(37,61,54,70);x.strokeRect(37,61,54,70);x.fillRect(43,22,42,36);x.strokeRect(43,22,42,36);x.fillStyle='#ff253d';x.shadowColor='#ff1735';x.shadowBlur=18;x.fillRect(49,36,10,6);x.fillRect(69,36,10,6);x.shadowBlur=0;x.fillStyle='#526875';x.fillRect(25,72,12,48);x.fillRect(91,72,12,48);x.fillRect(43,131,15,52);x.fillRect(70,131,15,52);x.strokeStyle='#31c7e8';x.beginPath();x.moveTo(64,0);x.lineTo(64,20);x.stroke();x.fillStyle='#31c7e8';x.fillRect(59,12,10,5)}
+const msp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(pc2),transparent:true}));msp.scale.set(2,3,1);msp.position.y=1.5;guard.add(msp);
+// Үкімет берген шағын көмекші робот: ойыншыға еріп жүреді, көк шамы сенсор сенімділігін көрсетеді.
+const helper=new THREE.Group(),helperBody=new THREE.Mesh(new THREE.BoxGeometry(.48,.42,.38),new THREE.MeshStandardMaterial({color:0x8ba6b3,metalness:.65,roughness:.35})),helperHead=new THREE.Mesh(new THREE.SphereGeometry(.22,12,10),new THREE.MeshStandardMaterial({color:0x263b48,metalness:.45})),helperEye=new THREE.Mesh(new THREE.SphereGeometry(.075,10,8),new THREE.MeshBasicMaterial({color:0x39dfff})),helperLamp=new THREE.PointLight(0x39dfff,.7,5);helperBody.position.y=.32;helperHead.position.y=.62;helperEye.position.set(0,.63,.19);helperLamp.position.set(0,.65,.25);helper.add(helperBody,helperHead,helperEye,helperLamp);scene.add(helper);
+const hands=new THREE.Group(),skin=new THREE.MeshStandardMaterial({color:0xc8a187,roughness:.8}),sleeve=new THREE.MeshStandardMaterial({color:0x22303a,roughness:.9});
+for(const sd of[-1,1]){const a=new THREE.Group(),fa=new THREE.Mesh(new THREE.BoxGeometry(.11,.11,.5),sleeve),pm=new THREE.Mesh(new THREE.BoxGeometry(.12,.07,.15),skin),th=new THREE.Mesh(new THREE.BoxGeometry(.03,.04,.08),skin),fi=new THREE.Mesh(new THREE.BoxGeometry(.11,.04,.09),skin);fa.position.z=.1;pm.position.z=-.2;th.position.set(-.07*sd,.01,-.2);fi.position.set(0,-.01,-.31);a.add(fa,pm,th,fi);a.position.set(.26*sd,0,0);a.rotation.set(.1,-.15*sd,0);hands.add(a)}
+const fl2=new THREE.Mesh(new THREE.CylinderGeometry(.035,.045,.24,10),new THREE.MeshStandardMaterial({color:0x555a60,metalness:.6}));fl2.rotation.x=Math.PI/2;fl2.position.set(-.26,.03,-.32);hands.add(fl2);hands.position.set(0,-.36,-.55);cam.add(hands);scene.add(guard);guard2=guard.clone(true);guard2.visible=false;scene.add(guard2);
+// ===== ойын күйі =====
+let prevPX=null,prevPZ=null,lastAiDt=.25;let lvl,state='menu',P,gd,gc,pc,yaw,pitch=0,stam=1,sprint=false,quiet=false,moving=false,puz,found,terms,exitC,mode='ІЗДЕУДЕ',tgt=[1,1],path=[],exN=0,ent=0,dbg=false,expl,hadLock=false,bob=0,toastT=0,tl=0,keys={};
+const hit=(x,z)=>[[-1,-1],[1,-1],[-1,1],[1,1]].some(([a,b])=>!open(Math.floor((x+a*.45)/S),Math.floor((z+b*.45)/S)));
+/* Деңгейді құру: лабиринт, терминалдар, есік, күзетші */
+function newGame(seed,sv){SEED=seed||(Math.random()*4294967296>>>0);rnd=mul(SEED);const lv=LV[L];N=lv.n;B=new Float32Array(N*N);K=190/N;tl=TL[L];fl.scale.set(N/21,N/21,1);fl.position.set(N*S/2,0,N*S/2);ce.scale.copy(fl.scale);ce.position.set(N*S/2,3,N*S/2);tf.repeat.set(N,N);lvl&&scene.remove(lvl);lvl=new THREE.Group();scene.add(lvl);genMaze();const D=bfs(1,1);let ex=[1,1];for(let i=0;i<N*N;i++)if(D[i]>D[idx(ex[0],ex[1])])ex=[i%N,i/N|0];exitC=ex;
+ puz=genPuzzle();found=[];const de=[];for(let y=0;y<N;y++)for(let x=0;x<N;x++)if(open(x,y)&&D[idx(x,y)]>5&&(x!=ex[0]||y!=ex[1])&&nb(x,y).length==1)de.push([x,y]);const deSpread=spreadPick(de,GN[L],[[1,1],ex]);de.length=0;de.push(...deSpread);
+ for(;de.length<GN[L];){const x=rnd()*N|0,y=rnd()*N|0;if(open(x,y)&&D[idx(x,y)]>5&&(x!=ex[0]||y!=ex[1]))de.push([x,y])}
+ const ws=[];for(let y=0;y<N;y++)for(let x=0;x<N;x++)if(g[idx(x,y)]&&(open(x-1,y)||open(x+1,y)||open(x,y-1)||open(x,y+1)))ws.push([x,y]);
+ const im=new THREE.InstancedMesh(new THREE.BoxGeometry(S,3,S),new THREE.MeshStandardMaterial({map:tw,roughness:.8,color:[0xffffff,0xaaccff,0xffccaa,0xccffcc,0xff9999,0xb6a1ff][L]}),ws.length),m=new THREE.Matrix4();ws.forEach(([x,y],i)=>{m.setPosition(cx(x),1.5,cx(y));im.setMatrixAt(i,m)});lvl.add(im);
+ const cipherCount=GN[L],groups=Array.from({length:cipherCount},()=>[]);puz.cs.forEach((cl,i)=>groups[i%cipherCount].push(cl));terms=groups.map((cls,i)=>{const mesh=new THREE.Mesh(new THREE.OctahedronGeometry(.58,0),new THREE.MeshStandardMaterial({color:0x16bfff,emissive:0x063b66,metalness:.55,roughness:.3}));mesh.position.set(cx(de[i][0]),.95,cx(de[i][1]));lvl.add(mesh);const l=new THREE.PointLight(0x16bfff,1.05,9);l.position.copy(mesh.position);lvl.add(l);return{c:de[i],cls,done:false,mesh,l,t:0}});
+ const oc=[];for(let y=1;y<N-1;y++)for(let x=1;x<N-1;x++)if(open(x,y)&&D[idx(x,y)]>4&&(x!=ex[0]||y!=ex[1])&&!terms.some(t=>t.c[0]==x&&t.c[1]==y))oc.push([x,y]);const genSpots=spreadPick(oc,GN[L],[[1,1],ex,...de]);
+ gens=genSpots.map(c=>{const m=new THREE.Group(),b=new THREE.Mesh(new THREE.BoxGeometry(1.2,1,.8),new THREE.MeshStandardMaterial({color:0x4a5036})),lamp=new THREE.Mesh(new THREE.SphereGeometry(.12),new THREE.MeshBasicMaterial({color:0xff2200})),l=new THREE.PointLight(0xff3300,.6,6);b.position.y=.5;lamp.position.set(.4,1.15,0);l.position.y=1.5;m.add(b,lamp,l);m.position.set(cx(c[0]),0,cx(c[1]));lvl.add(m);return{c,m,lamp,l,st:0,t:0}});
+ const dr=new THREE.Mesh(new THREE.BoxGeometry(1.6,2.4,.6),new THREE.MeshBasicMaterial({color:0xff4d5e}));dr.position.set(cx(ex[0]),1.2,cx(ex[1]));lvl.add(dr);window.door=dr;
+ const far=[];for(let i=0;i<N*N;i++)if(D[i]>=Math.min(14,N)&&!(i%N==ex[0]&&(i/N|0)==ex[1]))far.push(i);const gi=far[rnd()*far.length|0]??0;gd={x:cx(gi%N),z:cx(gi/N|0)};
+ P={x:cx(1),z:cx(1)};yaw=open(2,1)?-Math.PI/2:Math.PI;pitch=0;stam=1;mode='ІЗДЕУДЕ';path=[];expl=new Uint8Array(N*N);bInit();gc=cell(gd);pc=cell(P);rnd=Math.random;
+ if(sv){sv.tf.forEach(i=>{const t=terms[i];if(t){t.done=true;t.t=0;t.mesh.material.color.set(0x234);t.l.intensity=0;found.push(...t.cls)}});sv.gf.forEach(i=>{const g=gens[i];if(g){g.st=2;g.lamp.material.color.setHex(0x44ff66);g.l.color.setHex(0x44ff66);g.l.intensity=1.2}});P.x=sv.px;P.z=sv.pz;yaw=sv.yaw;tl=sv.tl;stam=sv.stam;gd.x=sv.gx;gd.z=sv.gz;gc=cell(gd);pc=cell(P);sv.ex.split('').forEach((c,i)=>expl[i]=+c)}
+ guard.position.set(gd.x,0,gd.z);guard2.visible=L>=4;gd2=null;path2=[];if(L>=4){let gi2=far.find(i=>Math.hypot(cx(i%N)-gd.x,cx(i/N|0)-gd.z)>N*S*.28);if(gi2==null)gi2=far[far.length-1];gd2={x:cx(gi2%N),z:cx(gi2/N|0)};if(sv&&sv.g2x!=null){gd2.x=sv.g2x;gd2.z=sv.g2z}guard2.position.set(gd2.x,0,gd2.z)}sa=5;ui();toast(tg('lvl_toast',{n:L+1,t:tg('lvt')[L],r:tg('lvr')[L]}))}
+function ui(){const f=found.map(c=>c.t),so=solve(found),pos=[0,1,2,3].map(i=>[...new Set(so.map(s=>s[i]))].join(' '));
+ $('cc').innerHTML=`<div style="color:#fff">${tg('cc_ciph')}: ${terms.filter(t=>t.done&&t.t<=0).length}/${terms.length} · ${tg('cc_cond')}: ${found.length}</div>`+(f.map(t=>`<div>▸ ${t}</div>`).join('')||'<i>'+tg('cc_none')+'</i>')+`<div style="margin-top:4px">${tg('cc_cand')}: <b class="k">${so.length}</b></div>`+['A','B','C','D'].slice(0,puz.s.length).map((n,i)=>`<div>${n}: <span class="k">${pos[i]}</span></div>`).join('')}
+function toast(t){$('tt').textContent=t;toastT=3}
+/* Күзетші ойлауы (0.25 с сайын): сүзгі → argmax → A* */
+function aiTick(){gc=cell(gd);pc=cell(P);const d=Math.hypot(gd.x-P.x,gd.z-P.z),seen=d<LV[L].r&&los(gd.x,gd.z,P.x,P.z);bPredict();
+ const soundRange=sprint?N*S*1.2:quiet?0:N*S*.43,heard=moving&&!quiet&&d<soundRange,sg=sprint?2.2+d/S*.08:1.25+d/S*.035,obs=heard&&!seen?{x:pc.x+(Math.random()-.5)*2*sg,y:pc.y+(Math.random()-.5)*2*sg,s:sg}:null;bUpdate(seen,obs);gens.forEach(g=>g.st==1&&gnoise(g));bias();mode=seen?'ҚУУДА':obs!=null?'ДЫБЫС ЕСТІДІ':'ІЗДЕУДЕ';
+ let bi=0,e=0;for(let i=0;i<N*N;i++){if(B[i]>0)e-=B[i]*Math.log2(B[i]);if(B[i]*(1+.05*rnd())>B[bi]*(1+.05*rnd()))bi=i}ent=e;tgt=[bi%N,bi/N|0];const r=astar(gc.x,gc.y,tgt[0],tgt[1]);path=r.path;exN=r.ex;if(gd2){const lead=Math.min(2.2,0.7+L*.22),vx=(P.x-(prevPX??P.x))/Math.max(.25,lastAiDt||.25),vz=(P.z-(prevPZ??P.z))/Math.max(.25,lastAiDt||.25),px=Math.max(0,Math.min(N-1,Math.floor((P.x+vx*lead)/S))),py=Math.max(0,Math.min(N-1,Math.floor((P.z+vz*lead)/S)));let aim= g[idx(px,py)]?tgt:[px,py];const c2=cell(gd2),r2=astar(c2.x,c2.y,aim[0],aim[1]);path2=r2.path}prevPX=P.x;prevPZ=P.z;lastAiDt=.25}
+function hud(){let p='';const nt=terms.find(t=>(!t.done||t.t>0)&&Math.hypot(cx(t.c[0])-P.x,cx(t.c[1])-P.z)<2.8);
+ const ng=gens.find(g=>g.st<2&&Math.hypot(cx(g.c[0])-P.x,cx(g.c[1])-P.z)<2.8);if(ng)p=ng.st?tg('gen_run',{t:ng.t.toFixed(1)}):tg('gen_press',{k:KL('interact')});else if(nt)p=nt.t>0?tg('ciph_run',{t:nt.t.toFixed(1)}):tg('ciph_press',{k:KL('interact')});else if(Math.hypot(cx(exitC[0])-P.x,cx(exitC[1])-P.z)<3)p=tg('door_press',{k:KL('interact')});$('pr').style.display=p?'block':'none';$('pr').textContent=p;
+ $('lv').textContent=tg('hud',{l:L+1,m:LV.length,s:Math.max(0,tl|0),g:gens.filter(g=>g.st==2).length,gm:gens.length,c:terms.filter(t=>t.done&&t.t<=0).length,cm:terms.length});$('st').firstChild.style.width=stam*100+'%';
+ $('ai').innerHTML=`<h4>${tg('ai_h')}: <span style="color:${mode=='ҚУУДА'?'#ff4d5e':'#ffd166'}">${M[mode]}</span></h4>${tg('ai_l1')}<br>${tg('ai_l2',{g:tgt,s:path.length-1,n:exN})}<br>${tg('ai_st')}: ${quiet?tg('st_q'):sprint?tg('st_r'):tg('st_w')} · ${L>=4?tg('ai_r2'):tg('ai_r1')} · ${tg('ai_cf')}: ${ent.toFixed(2)} ${tg('ai_bit')} <span style="opacity:.6">· ${tg('ai_tab',{k:KL('brain')})}</span>`;
+ toastT-=1/60;if(toastT<0)$('tt').textContent=''}
+/* Күзетші қозғалысы: жол бойымен, көрсе — тікелей */
+function moveGuard(dt){const d=Math.hypot(gd.x-P.x,gd.z-P.z);if(d<1){lose();return}
+ let tx,tz;const seen=mode=='ҚУУДА';if(seen&&d<S*1.6){tx=P.x;tz=P.z}else if(path.length>1){tx=cx(path[1][0]);tz=cx(path[1][1])}else return;
+ const dx=tx-gd.x,dz=tz-gd.z,l=Math.hypot(dx,dz)||1,sp=(seen?LV[L].c:LV[L].g)*(1+Math.min(2.5,Math.max(0,(d-12)/10)))*dt;gd.x+=dx/l*Math.min(sp,l);gd.z+=dz/l*Math.min(sp,l);guard.position.set(gd.x,0,gd.z);guard.rotation.y=Math.atan2(dx,dz);if(gd2&&guard2.visible){const d2=Math.hypot(gd2.x-P.x,gd2.z-P.z);if(d2<1){lose();return}let x2,z2;if(seen&&d2<S*1.6){x2=P.x;z2=P.z}else if(path2.length>1){x2=cx(path2[1][0]);z2=cx(path2[1][1])}if(x2!=null){const ax=x2-gd2.x,az=z2-gd2.z,ll=Math.hypot(ax,az)||1,v=(seen?LV[L].c:LV[L].g)*(1+L*.055)*.92*dt;gd2.x+=ax/ll*Math.min(v,ll);gd2.z+=az/ll*Math.min(v,ll);guard2.position.set(gd2.x,0,gd2.z);guard2.rotation.y=Math.atan2(ax,az)}}}
+/* Ойыншы қозғалысы және қабырғамен соқтығысу */
+function move(dt){const gp=pad(),f=Math.max(-1,Math.min(1,(keys[SET.keys.forward]||keys.ArrowUp?1:0)-(keys[SET.keys.back]||keys.ArrowDown?1:0)-gp.y)),r=Math.max(-1,Math.min(1,(keys[SET.keys.right]?1:0)-(keys[SET.keys.left]?1:0)+gp.x));yaw-=gp.rx*dt*2.5*SET.sx;pitch=Math.max(-1.2,Math.min(1.2,pitch-gp.ry*dt*2*SET.sy*(SET.iy?-1:1)));moving=!!(f||r);
+ quiet=!!(keys[SET.keys.sneak]||keys.AltLeft||keys.AltRight)&&moving;sprint=!!((keys[SET.keys.run]||keys.ShiftLeft||keys.ShiftRight||gp.sp)&&stam>.03&&moving&&!quiet);stam=sprint?Math.max(0,stam-dt*.34):Math.min(1,stam+dt*.19);
+ const l=Math.hypot(f,r)||1,sp=(sprint?7.2:quiet?2.65:4.6)*dt,dx=(-Math.sin(yaw)*f+Math.cos(yaw)*r)/l*sp,dz=(-Math.cos(yaw)*f-Math.sin(yaw)*r)/l*sp;
+ if(!hit(P.x+dx,P.z))P.x+=dx;if(!hit(P.x,P.z+dz))P.z+=dz;bob+=moving?dt*(sprint?13:9):0;
+ const c=cell(P);for(let y=-2;y<=2;y++)for(let x=-2;x<=2;x++)if(open(c.x+x,c.y+y))expl[idx(c.x+x,c.y+y)]=1}
+/* E түймесі: терминалды бұзу немесе есік коды */
+function act(){const ng=gens.find(g=>g.st==0&&Math.hypot(cx(g.c[0])-P.x,cx(g.c[1])-P.z)<2.8);if(ng){ng.st=1;ng.t=2+Math.random()*3;beep(120,.3,.3*SET.vg);toast(tg('t_gs'));return}const nt=terms.find(t=>(!t.done||t.t>0)&&Math.hypot(cx(t.c[0])-P.x,cx(t.c[1])-P.z)<2.8);
+ if(nt){nt.done=true;nt.t=2+Math.random()*3;nt.mesh.material.color.set(0xffc34d);toast(tg('t_cs'));return}
+ if(Math.hypot(cx(exitC[0])-P.x,cx(exitC[1])-P.z)<3){if(gens.some(g=>g.st<2)){toast(tg('t_np',{a:gens.filter(g=>g.st==2).length,b:gens.length}));return}state='input';document.exitPointerLock();$('ip').style.display='flex';$('ip').querySelector('p').textContent=tg('ip_p',{n:puz.s.length});$('in').maxLength=puz.s.length;$('in').value='';setTimeout(()=>$('in').focus(),50)}}
+function submit(){const v=$('in').value.trim();$('ip').style.display='none';
+ if(v==puz.s.join('')){window.door.material.color.set(0x44ff88);L<LV.length-1?end(tg('e_fh',{n:L+1}),tg('e_ft',{v:v}),tg('b_next'),'next'):showStory('outro')}
+ else{B.fill(0);B[idx(exitC[0],exitC[1])]=1;toast(tg('t_wr'));pause(tg('e_wt'),tg('b_cont'))}}
+function end(h,t,b,m){state='end';document.exitPointerLock();$('ov').style.display='flex';$('ov').querySelector('h1').textContent=h;$('ov').querySelectorAll('p').forEach((p,i)=>p.style.display=i?'none':'block');$('ov').firstElementChild.nextSibling.textContent=t;$('go').textContent=b;$('go').dataset.m=m||'new'}
+function lose(t){if(state!='play')return;end(tg('e_lh'),t||tg('e_lt'),tg('b_retry'),'new')}
+function pause(t,b){save();state='pause';$('ov').style.display='flex';$('ov').querySelector('h1').textContent=tg('pause');$('ov').querySelectorAll('p').forEach((p,i)=>p.style.display=i?'none':'block');$('ov').querySelector('p').textContent=t;$('go').textContent=b;$('go').dataset.m='resume'}
+$('go').onclick=()=>{const m=$('go').dataset.m;audioInit();if(m=='storymenu'){showMenu();return}if(m=='next')L++;if(m=='all')L=0;if(m=='new'||m=='next'||m=='all'||state=='menu')newGame();$('ov').style.display='none';state='play';try{$('c').requestPointerLock()}catch(e){}};
+$('ok').onclick=submit;$('in').onkeydown=e=>{if(e.key=='Enter')submit();e.stopPropagation()};
+document.addEventListener('pointerlockchange',()=>{if(document.pointerLockElement)hadLock=true;else if(state=='play'&&hadLock)pause(tg('e_pt'),tg('b_cont'))});
+addEventListener('keydown',e=>{if(rebindAction){e.preventDefault();if(e.code=='Escape'){rebindAction=null;draw();return}if(['ControlLeft','ControlRight','MetaLeft','MetaRight'].includes(e.code))return;const o=Object.keys(D.keys).find(k=>k!=rebindAction&&D.keys[k]==e.code);if(o)D.keys[o]=D.keys[rebindAction];D.keys[rebindAction]=e.code;rebindAction=null;draw();return}keys[e.code]=true;if(state=='play'){if(e.code==SET.keys.interact)act();if(e.code==SET.keys.brain){e.preventDefault();dbg=!dbg}}});addEventListener('keyup',e=>keys[e.code]=false);
+let drag=false;addEventListener('mousedown',()=>drag=true);addEventListener('mouseup',()=>drag=false);
+addEventListener('mousemove',e=>{if(state!='play'||!(document.pointerLockElement||drag))return;yaw-=e.movementX*.0022*SET.sx*(SET.ix?-1:1);pitch=Math.max(-1.2,Math.min(1.2,pitch-e.movementY*.0022*SET.sy*(SET.iy?-1:1)))});
+function rs(){sizeVideo()}addEventListener('resize',rs);
+const mc=$('m').getContext('2d');let K=9;
+/* Шағын карта (Tab — сенім картасы мен A* жолы) */
+function minimap(){mc.fillStyle='#050a10';mc.fillRect(0,0,190,190);let mx=0;for(const v of B)mx=Math.max(mx,v);
+ for(let i=0;i<N*N;i++){const x=i%N,y=i/N|0;if(expl[i]){mc.fillStyle=g[i]?'#1d2c3a':'#2c4558';mc.fillRect(x*K,y*K,K,K)}
+ if(dbg&&B[i]>0){mc.fillStyle=`rgba(255,60,90,${B[i]/mx*.85})`;mc.fillRect(x*K,y*K,K,K)}}
+ mc.fillStyle='#ff4d5e';mc.fillRect(exitC[0]*K,exitC[1]*K,K,K);for(const g of gens)if(expl[idx(g.c[0],g.c[1])]){mc.fillStyle=g.st==2?'#44ff66':'#ffaa00';mc.fillRect(g.c[0]*K+1,g.c[1]*K+1,K-2,K-2)}for(const t of terms)if(!t.done&&expl[idx(t.c[0],t.c[1])]){mc.fillStyle='#3fe0ff';mc.fillRect(t.c[0]*K+2,t.c[1]*K+2,K-4,K-4)}
+ if(dbg&&path.length>1){mc.strokeStyle='#ffd166';mc.beginPath();path.forEach(([x,y],i)=>mc[i?'lineTo':'moveTo']((x+.5)*K,(y+.5)*K));mc.stroke()}
+ if(dbg||mode=='ҚУУДА'){mc.fillStyle='#f33';mc.beginPath();mc.arc(gd.x/S*K,gd.z/S*K,4,0,7);mc.fill();if(gd2&&guard2.visible){mc.fillStyle='#ff8a35';mc.beginPath();mc.arc(gd2.x/S*K,gd2.z/S*K,4,0,7);mc.fill()}}
+ mc.save();mc.translate(P.x/S*K,P.z/S*K);mc.rotate(-yaw);mc.fillStyle='#fff';mc.beginPath();mc.moveTo(0,-6);mc.lineTo(4,4);mc.lineTo(-4,4);mc.fill();mc.restore()}
+let AC,hb=0,last=performance.now(),acc=0;function beep(f,d,v){if(!AC)return;const o=AC.createOscillator(),a=AC.createGain();o.frequency.value=f;a.gain.value=v;o.connect(a);a.connect(AC.destination);o.start();a.gain.exponentialRampToValueAtTime(.001,AC.currentTime+d);o.stop(AC.currentTime+d)}
+/* Негізгі цикл: ~60 рет/с */
+function loop(t){requestAnimationFrame(loop);if(SET.fps&&t-LR<1000/SET.fps-3)return;LR=t;hands.visible=state=="play";helper.visible=state=="play";const dt=Math.min(.05,(t-last)/1000);last=t;
+ if(state=='play'){tl-=dt;if(tl<=0)lose(tg('e_time'));move(dt);genUpdate(dt);sa+=dt;if(sa>5){sa=0;save()}acc+=dt;if(acc>.25){acc=0;aiTick()}moveGuard(dt);hud();cam.position.set(P.x,1.65+Math.sin(bob)*.06,P.z);cam.rotation.set(pitch,yaw,0);helper.visible=true;helper.position.set(P.x+Math.cos(yaw)*2.1,Math.max(.45,1.05+Math.sin(t*.002)*.08),P.z-Math.sin(yaw)*2.1);helper.rotation.y=yaw+Math.PI;helperLamp.intensity=.25+Math.min(1.5,ent/5);helperEye.material.color.setHex(ent>5?0xffb347:0x39dfff);hands.position.y=-.36+(moving?Math.sin(bob)*.014:0)+(sprint?Math.sin(bob*2)*.02:0);hands.position.x=moving?Math.cos(bob*.5)*.012:0;hands.rotation.x=sprint?-.22:0;torch.intensity=1.4-L*.12+Math.sin(t*.02)*.04;
+ const near=Math.max(0,1-Math.hypot(gd.x-P.x,gd.z-P.z)/10);scene.fog.density=LV[L].fog+near*.03;hb-=dt;if(near>0&&hb<=0){hb=.9-near*.6;beep(55,.18,.9*SET.vhb);setTimeout(()=>beep(46,.22,.7*SET.vhb),170)}minimap()}
+ audioTick(dt);if(state!="menu")R.render(scene,cam)}
+// ===== баптаулар, сақтау, дыбыс, генератор, мәзір =====
+let lsFail=0;const LS={g:(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch(e){return d}},s:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){lsFail=1}}};
+const DEFAULT_KEYS={forward:'KeyW',back:'KeyS',left:'KeyA',right:'KeyD',interact:'KeyE',brain:'Tab',run:'ShiftLeft',sneak:'AltLeft'};const SET=Object.assign({sx:1,sy:1,ix:0,iy:0,res:'auto',dm:'bl',fps:60,vm:.6,vg:.7,vmon:.8,vhb:.8,keys:DEFAULT_KEYS},LS.g('bo_set',{}));SET.keys=Object.assign({},DEFAULT_KEYS,SET.keys||{});SET.gp=SET.gp||'auto';SET.lang=SET.lang||'kk';if(SET.dm=='bl')SET.dm='win';let rebindAction=null,D=null,flT=0;
+LS.s('bo_t',1);let SV=LS.g('bo_sv',[null,null,null]),cur=-1,SEED=1,gens=[],sa=0,LR=0,pa=0,scr='main',tab='tc',cf=-1,pt=0,ct=3,G={},monOsc,windF;
+const mul=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
+function save(){if(cur<0||state!='play')return;SV[cur]={L,seed:SEED,tf:terms.map((t,i)=>t.done&&t.t<=0?i:-1).filter(i=>i>=0),gf:gens.map((g,i)=>g.st==2?i:-1).filter(i=>i>=0),px:P.x,pz:P.z,yaw,tl,stam,gx:gd.x,gz:gd.z,g2x:gd2?.x??null,g2z:gd2?.z??null,ex:Array.from(expl).join(''),ts:Date.now()};LS.s('bo_sv',SV)}
+/* Генератор шуы: дыбыс көзі бойынша күзетшінің сенімін жаңартады (HMM) */
+function gnoise(g){for(let i=0;i<N*N;i++)if(B[i]){const x=i%N,y=i/N|0;B[i]*=Math.exp(-((x-g.c[0])**2+(y-g.c[1])**2)/8)+.02}bNorm()}
+/* Күзетші ойыншы мақсатқа (терминал, генератор) барады деп болжайды */
+function bias(){const o=[...terms.filter(t=>!t.done).map(t=>t.c),...gens.filter(g=>g.st==0).map(g=>g.c)];if(!o.length)return;for(const c of o)B[idx(c[0],c[1])]+=.03/o.length;bNorm()}
+/* Генератор: E басқаннан кейін 1–5 с кездейсоқ іске қосылады */
+function genUpdate(dt){for(const g of gens)if(g.st==1){g.t-=dt;g.m.position.x=cx(g.c[0])+(Math.random()-.5)*.06;g.lamp.material.color.setHex(Math.random()<.5?0xffaa00:0x330000);if(Math.random()<dt*8)beep(70+Math.random()*50,.08,.25*SET.vg);if(g.t<=0){g.st=2;g.m.position.x=cx(g.c[0]);g.lamp.material.color.setHex(0x44ff66);g.l.color.setHex(0x44ff66);g.l.intensity=1.2;beep(160,.6,.4*SET.vg);gnoise(g);toast(tg('t_go',{a:gens.filter(x=>x.st==2).length,b:gens.length}));save()}}for(const t of terms)if(t.done&&t.t>0){t.t-=dt;t.mesh.rotation.y+=dt*2;t.mesh.material.emissive.setHex(0x6b3b00);if(t.t<=0){t.t=0;t.mesh.material.color.set(0x234);t.mesh.material.emissive.setHex(0x000000);t.l.intensity=0;found.push(...t.cls);ui();save();toast(tg('t_co',{n:t.cls.length}))}}}
+function pad(){const g=SET.gp=='off'?null:gpad(),o={x:0,y:0,rx:0,ry:0,sp:0};if(!g)return o;const dz=v=>Math.abs(v)<.15?0:v;o.x=dz(g.axes[0]);o.y=dz(g.axes[1]);o.rx=dz(g.axes[2]||0);o.ry=dz(g.axes[3]||0);o.sp=(g.buttons[4]&&g.buttons[4].pressed)||(g.buttons[6]&&g.buttons[6].pressed)?1:0;const a=g.buttons[0]&&g.buttons[0].pressed?1:0;if(a&&!pa&&state=='play')act();pa=a;return o}
+function sizeVideo(){const d=Math.min(devicePixelRatio||1,2);let w=Math.round(innerWidth*d),h=Math.round(innerHeight*d);if(SET.res!='auto')[w,h]=SET.res.split('x').map(Number);R.setPixelRatio(1);R.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix()}
+let fsNow=false;
+function applyVideo(){sizeVideo();const api=window.pywebview&&window.pywebview.api,want=SET.dm=='fs';
+ if(api){if(want!=fsNow){fsNow=want;api.set_fullscreen(want)}if(!want&&SET.res!='auto'){const[w,h]=SET.res.split('x').map(Number);setTimeout(()=>api.set_size(w,h),300)}}
+ else{if(want&&!document.fullscreenElement)document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen().catch(()=>{});if(!want&&document.fullscreenElement)document.exitFullscreen&&document.exitFullscreen()}}
+addEventListener('pywebviewready',applyVideo);
+/* Дыбыс: фон (дрон + жел + сықырлар), мәзір музыкасы, монстр, генератор */
+function audioInit(){if(AC){AC.resume();return}AC=new(window.AudioContext||window.webkitAudioContext)();for(const n of['menu','game','mon','hb','gen']){const g=AC.createGain();g.gain.value=0;g.connect(AC.destination);G[n]=g}
+ [55,55.7,82.4].forEach(f=>{const o=AC.createOscillator(),l=AC.createBiquadFilter(),a=AC.createGain();o.type='sawtooth';o.frequency.value=f;l.type='lowpass';l.frequency.value=140;a.gain.value=.12;o.connect(l);l.connect(a);a.connect(G.game);o.start()});
+ const b=AC.createBuffer(1,AC.sampleRate*2,AC.sampleRate),d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;const sn=AC.createBufferSource();sn.buffer=b;sn.loop=true;windF=AC.createBiquadFilter();windF.type='bandpass';windF.frequency.value=400;windF.Q.value=.6;const wg=AC.createGain();wg.gain.value=.15;sn.connect(windF);windF.connect(wg);wg.connect(G.game);sn.start();
+ monOsc=AC.createOscillator();const mf=AC.createBiquadFilter();monOsc.type='sawtooth';monOsc.frequency.value=38;mf.type='lowpass';mf.frequency.value=200;monOsc.connect(mf);mf.connect(G.mon);monOsc.start();
+ const h=AC.createOscillator(),hf=AC.createBiquadFilter();h.type='square';h.frequency.value=50;hf.type='lowpass';hf.frequency.value=180;h.connect(hf);hf.connect(G.gen);h.start()}
+function note(f,d,v,dst){const o=AC.createOscillator(),a=AC.createGain(),t=AC.currentTime;o.type='sine';o.frequency.value=f;a.gain.setValueAtTime(0,t);a.gain.linearRampToValueAtTime(v,t+.6);a.gain.linearRampToValueAtTime(0,t+d);o.connect(a);a.connect(dst);o.start();o.stop(t+d)}
+function creak(){const o=AC.createOscillator(),a=AC.createGain(),t=AC.currentTime;o.type='sawtooth';o.frequency.setValueAtTime(180+Math.random()*100,t);o.frequency.linearRampToValueAtTime(90,t+.7);a.gain.setValueAtTime(.06,t);a.gain.linearRampToValueAtTime(0,t+.7);o.connect(a);a.connect(G.game);o.start();o.stop(t+.7)}
+function audioTick(dt){if(!AC)return;const t=AC.currentTime,pl=state=='play',mn=state=='menu',d=pl?Math.hypot(gd.x-P.x,gd.z-P.z):99,pr=Math.max(0,1-d/18);
+ G.game.gain.setTargetAtTime(pl?SET.vg*.5:0,t,.3);G.menu.gain.setTargetAtTime(mn?SET.vm:0,t,.3);G.mon.gain.setTargetAtTime(pl?SET.vmon*pr*pr*.6:0,t,.2);monOsc.frequency.setTargetAtTime(34+pr*26,t,.3);
+ let gn=0;if(pl)for(const g of gens)if(g.st==2)gn=Math.max(gn,1-Math.hypot(cx(g.c[0])-P.x,cx(g.c[1])-P.z)/16);G.gen.gain.setTargetAtTime(pl?SET.vg*gn*.3:0,t,.2);
+ windF.frequency.setTargetAtTime(300+Math.sin(t*.3)*200+pr*300,t,.5);
+ if(mn){pt-=dt;if(pt<=0){pt=2.4;note([196,220,261.6,293.7,329.6,392][Math.random()*6|0],3,.16,G.menu)}}if(pl){ct-=dt;if(ct<=0){ct=4+Math.random()*7;creak()}}}
+// ----- мәзір -----
+const mnE=document.createElement('div');mnE.id='mn';document.body.appendChild(mnE);
+const B_=(t,a)=>`<button data-a="${a}">${t}</button>`,sld=(t,k,a,b,st)=>`<label>${t}: <b>${(+SET[k]).toFixed(2)}</b><br><input type="range" data-k="${k}" min="${a}" max="${b}" step="${st}" value="${SET[k]}"></label>`,
+chk=(t,k)=>`<label><input type="checkbox" data-k="${k}" ${SET[k]?'checked':''}> ${t}</label>`,
+sel=(t,k,o)=>`<label>${t}: <select data-k="${k}">${o.map(([v,l])=>`<option value="${v}" ${String(SET[k])==String(v)?'selected':''}>${l}</option>`).join('')}</select></label>`;
+function showMenu(sc){state='menu';document.body.classList.add('m');if(document.exitPointerLock)document.exitPointerLock();$('ov').style.display='none';$('ip').style.display='none';mnE.style.display='flex';scr=sc||'main';cf=-1;draw()}
+const I18N={
+kk:{cont:'ЖАЛҒАСТЫРУ',newg:'ЖАҢА ОЙЫН',settings:'БАПТАУЛАР',about:'БІЗ ТУРАЛЫ',exit:'ШЫҒУ',back:'АРТҚА',lsWarn:'⚠ Бұл браузерде сақтау қолжетімсіз. Прогресс жабылғанда жоғалады.',slotsTitle:'САҚТАУ ҰЯШЫҚТАРЫ',slotLine:'{n}-ұяшық: {l}-деңгей · {d}',slotEmpty:'{n}-ұяшық: бос',load:'Жүктеу',overwrite:'Үстіне жазу? Қайта басыңыз',aboutTitle:'ЖАСАУШЫЛАР',exitQ:'Ойыннан шығасыз ба?',yes:'Иә',no:'Жоқ',byeTitle:'САУ БОЛЫҢЫЗ',byeText:'Терезені өзі жаба алмады — қойындыны жабыңыз.',toMenu:'Мәзірге',
+tab_tc:'Басқару',tab_tk:'Пернетақта',tab_tv:'Бейне',tab_ta:'Дыбыс',tab_tl:'Тіл',sx:'Тышқан X сезімталдығы',sy:'Тышқан Y сезімталдығы',ix:'X осін инверсиялау',iy:'Y осін инверсиялау',
+k_forward:'Алға',k_back:'Артқа',k_left:'Солға',k_right:'Оңға',k_interact:'Әрекет',k_brain:'ЖИ картасы',k_run:'Жүгіру',k_sneak:'Тыныш қадам',keysHint:'Ауыстыру үшін батырманы басып, жаңа пернені басыңыз. Бір перне екі әрекетке қойылса — олар орын ауыстырады.',pressKey:'Жаңа пернені басыңыз… (Esc — болдырмау)',
+gpTitle:'Джойстик',gpOn:'Қосылған: {n} — басқару ҚОСУЛЫ',gpNone:'Қосылмаған — басқару ӨШІРУЛІ',gpOff:'Қолмен өшірілген — басқару ӨШІРУЛІ',gpAuto:'Авто (қосылса — қосылады)',gpOffBtn:'Өшіру',gpHint:'Сол стик — жүру · оң стик — қарау · A — әрекет. Джойстикті қосып, кез келген батырманы басыңыз.',
+res:'Ажыратымдылық',auto:'Авто',dm:'Экран режимі',dmFs:'Тұтас экран',dmWin:'Терезе',fps:'Кадр жиілігі',unl:'Шектеусіз',vidHint:'Өзгеріс «Қолдану» басқанда іске асады. Рендер ажыратымдылығы ойын кезінде көрінеді.',
+vm:'Мәзір музыкасы',vg:'Ойын музыкасы мен фон',vmon:'Монстр дыбысы',vhb:'Жүрек соғысы',langHint:'Тілді таңдап, «Қолдану» басыңыз. Мәзір, ойын ішіндегі мәтін мен сюжет таңдалған тілге ауысады.',
+apply:'Қолдану',reset:'Бастапқы мәндер',applied:'Қолданылды ✓',resetDone:'Қалпына келтірілді — «Қолдану» басыңыз',unsaved:'Сақталмаған өзгерістер'},
+ru:{cont:'ПРОДОЛЖИТЬ',newg:'НОВАЯ ИГРА',settings:'НАСТРОЙКИ',about:'ОБ АВТОРАХ',exit:'ВЫХОД',back:'НАЗАД',lsWarn:'⚠ Сохранение в этом браузере недоступно. Прогресс пропадёт при закрытии.',slotsTitle:'СЛОТЫ СОХРАНЕНИЯ',slotLine:'Слот {n}: уровень {l} · {d}',slotEmpty:'Слот {n}: пусто',load:'Загрузить',overwrite:'Перезаписать? Нажмите ещё раз',aboutTitle:'РАЗРАБОТЧИКИ',exitQ:'Выйти из игры?',yes:'Да',no:'Нет',byeTitle:'ДО ВСТРЕЧИ',byeText:'Окно не удалось закрыть — закройте вкладку.',toMenu:'В меню',
+tab_tc:'Управление',tab_tk:'Клавиатура',tab_tv:'Видео',tab_ta:'Звук',tab_tl:'Язык',sx:'Чувствительность мыши X',sy:'Чувствительность мыши Y',ix:'Инвертировать ось X',iy:'Инвертировать ось Y',
+k_forward:'Вперёд',k_back:'Назад',k_left:'Влево',k_right:'Вправо',k_interact:'Действие',k_brain:'Карта ИИ',k_run:'Бег',k_sneak:'Тихий шаг',keysHint:'Нажмите на кнопку, затем на новую клавишу. Если клавиша уже занята — действия поменяются местами.',pressKey:'Нажмите новую клавишу… (Esc — отмена)',
+gpTitle:'Геймпад',gpOn:'Подключён: {n} — управление ВКЛ',gpNone:'Не подключён — управление ВЫКЛ',gpOff:'Отключён вручную — управление ВЫКЛ',gpAuto:'Авто (вкл. при подключении)',gpOffBtn:'Выключить',gpHint:'Левый стик — движение · правый — обзор · A — действие. Подключите геймпад и нажмите любую кнопку.',
+res:'Разрешение',auto:'Авто',dm:'Режим экрана',dmFs:'Полный экран',dmWin:'Окно',fps:'Частота кадров',unl:'Без ограничения',vidHint:'Изменения вступают в силу после «Применить». Разрешение рендера видно во время игры.',
+vm:'Музыка меню',vg:'Музыка игры и фон',vmon:'Звук монстра',vhb:'Сердцебиение',langHint:'Выберите язык и нажмите «Применить». Меню, игровые тексты и сюжет переключатся на выбранный язык.',
+apply:'Применить',reset:'Сбросить',applied:'Применено ✓',resetDone:'Сброшено — нажмите «Применить»',unsaved:'Есть несохранённые изменения'},
+en:{cont:'CONTINUE',newg:'NEW GAME',settings:'SETTINGS',about:'ABOUT',exit:'EXIT',back:'BACK',lsWarn:'⚠ Saving is unavailable in this browser. Progress is lost on close.',slotsTitle:'SAVE SLOTS',slotLine:'Slot {n}: level {l} · {d}',slotEmpty:'Slot {n}: empty',load:'Load',overwrite:'Overwrite? Click again',aboutTitle:'CREATORS',exitQ:'Quit the game?',yes:'Yes',no:'No',byeTitle:'GOODBYE',byeText:'Could not close the window — close the tab.',toMenu:'To menu',
+tab_tc:'Controls',tab_tk:'Keyboard',tab_tv:'Video',tab_ta:'Audio',tab_tl:'Language',sx:'Mouse sensitivity X',sy:'Mouse sensitivity Y',ix:'Invert X axis',iy:'Invert Y axis',
+k_forward:'Forward',k_back:'Back',k_left:'Left',k_right:'Right',k_interact:'Interact',k_brain:'AI map',k_run:'Run',k_sneak:'Sneak',keysHint:'Click a button, then press the new key. If the key is already used, the two actions swap.',pressKey:'Press a new key… (Esc to cancel)',
+gpTitle:'Gamepad',gpOn:'Connected: {n} — control ON',gpNone:'Not connected — control OFF',gpOff:'Disabled manually — control OFF',gpAuto:'Auto (on when connected)',gpOffBtn:'Off',gpHint:'Left stick — move · right stick — look · A — interact. Connect a gamepad and press any button.',
+res:'Resolution',auto:'Auto',dm:'Display mode',dmFs:'Fullscreen',dmWin:'Windowed',fps:'Frame rate',unl:'Unlimited',vidHint:'Changes take effect after Apply. Render resolution is visible in-game.',
+vm:'Menu music',vg:'Game music & ambience',vmon:'Monster sound',vhb:'Heartbeat',langHint:'Pick a language and press Apply. The menu, in-game text and story switch to the chosen language.',
+apply:'Apply',reset:'Reset',applied:'Applied ✓',resetDone:'Reset — press Apply to keep',unsaved:'Unsaved changes'},
+zh:{cont:'继续',newg:'新游戏',settings:'设置',about:'关于',exit:'退出',back:'返回',lsWarn:'⚠ 此浏览器无法保存，关闭后进度会丢失。',slotsTitle:'存档位',slotLine:'存档 {n}：第 {l} 关 · {d}',slotEmpty:'存档 {n}：空',load:'读取',overwrite:'覆盖？再点一次',aboutTitle:'制作人员',exitQ:'确定退出游戏吗？',yes:'是',no:'否',byeTitle:'再见',byeText:'无法关闭窗口，请关闭标签页。',toMenu:'返回菜单',
+tab_tc:'操作',tab_tk:'键盘',tab_tv:'画面',tab_ta:'声音',tab_tl:'语言',sx:'鼠标 X 灵敏度',sy:'鼠标 Y 灵敏度',ix:'反转 X 轴',iy:'反转 Y 轴',
+k_forward:'前进',k_back:'后退',k_left:'向左',k_right:'向右',k_interact:'互动',k_brain:'AI 地图',k_run:'奔跑',k_sneak:'潜行',keysHint:'点击按钮后按下新按键。若按键已被占用，两个动作将互换。',pressKey:'请按新按键…（Esc 取消）',
+gpTitle:'手柄',gpOn:'已连接：{n} — 手柄控制已开启',gpNone:'未连接 — 手柄控制已关闭',gpOff:'已手动关闭 — 手柄控制已关闭',gpAuto:'自动（连接后开启）',gpOffBtn:'关闭',gpHint:'左摇杆移动 · 右摇杆视角 · A 互动。请连接手柄并按任意键。',
+res:'分辨率',auto:'自动',dm:'显示模式',dmFs:'全屏',dmWin:'窗口',fps:'帧率',unl:'不限制',vidHint:'点击“应用”后生效。渲染分辨率在游戏中可见。',
+vm:'菜单音乐',vg:'游戏音乐与环境音',vmon:'怪物声音',vhb:'心跳声',langHint:'选择语言后点击“应用”。菜单、游戏内文字和剧情都会切换为所选语言。',
+apply:'应用',reset:'重置',applied:'已应用 ✓',resetDone:'已重置 — 请点击“应用”',unsaved:'有未保存的更改'}};
+const i18=(k,o)=>{const l=(scr=='set'&&D?D.lang:SET.lang),s=(I18N[l]&&I18N[l][k])||I18N.kk[k]||k;return o?s.replace(/\{(\w+)\}/g,(m,a)=>o[a]):s};
+const clone=o=>JSON.parse(JSON.stringify(o));
+const DEF={sx:1,sy:1,ix:0,iy:0,keys:DEFAULT_KEYS,gp:'auto',res:'auto',dm:'win',fps:60,vm:.6,vg:.7,vmon:.8,vhb:.8,lang:'kk'};
+const GRP={tc:['sx','sy','ix','iy'],tk:['keys','gp'],tv:['res','dm','fps'],ta:['vm','vg','vmon','vhb'],tl:['lang']};
+const gpad=()=>[...(navigator.getGamepads?navigator.getGamepads():[])].find(Boolean)||null;
+const dirty=()=>JSON.stringify(D)!=JSON.stringify(SET);
+function mark(){const e=$('dt');if(e)e.style.visibility=dirty()?'visible':'hidden'}
+function flash(s){const f=$('fl');if(!f)return;f.textContent=s;clearTimeout(flT);flT=setTimeout(()=>{f.textContent=''},1800)}
+function applySet(){Object.assign(SET,clone(D));LS.s('bo_set',SET);applyVideo();applyLangStatic();draw();flash(i18('applied'))}
+function gpChg(){if(state=='menu'&&scr=='set'&&tab=='tk'&&!rebindAction)draw()}
+addEventListener('gamepadconnected',gpChg);addEventListener('gamepaddisconnected',gpChg);
+const sw=(k,x)=>`<label class="sw"><input type="checkbox" data-k="${k}" ${D[k]?'checked':''}><i></i><span>${x}</span></label>`,
+rg=(k,a,b,st,x)=>`<div class="fld"><label>${x}<b>${(+D[k]).toFixed(2)}</b></label><input type="range" data-k="${k}" min="${a}" max="${b}" step="${st}" value="${D[k]}"></div>`,
+sl=(k,x,o)=>`<div class="fld"><label>${x}</label><select data-k="${k}">${o.map(([v,l])=>`<option value="${v}"${String(D[k])==String(v)?' selected':''}>${l}</option>`).join('')}</select></div>`;
+function setBody(){const gp=gpad(),gm=D.gp;
+ if(tab=='tc')return rg('sx',.2,3,.05,i18('sx'))+rg('sy',.2,3,.05,i18('sy'))+sw('ix',i18('ix'))+sw('iy',i18('iy'));
+ if(tab=='tk')return `<div class="keys">${Object.keys(DEFAULT_KEYS).map(k=>`<button class="key${rebindAction==k?' wait':''}" data-bind="${k}"><span>${i18('k_'+k)}</span><kbd>${rebindAction==k?'…':keyLabel(D.keys[k])}</kbd></button>`).join('')}</div><small>${i18(rebindAction?'pressKey':'keysHint')}</small>`
+  +`<div class="card"><h3>🎮 ${i18('gpTitle')}</h3><div class="gps ${gp&&gm!='off'?'ok':'no'}"><i></i><span>${gm=='off'?i18('gpOff'):gp?i18('gpOn',{n:gp.id.slice(0,36)}):i18('gpNone')}</span></div><div class="seg">${[['auto',i18('gpAuto')],['off',i18('gpOffBtn')]].map(([v,l])=>`<button data-a="gp_${v}" class="${gm==v?'on':''}">${l}</button>`).join('')}</div><small>${i18('gpHint')}</small></div>`;
+ if(tab=='tv')return sl('res',i18('res'),[['auto',i18('auto')],['1280x720','1280×720'],['1600x900','1600×900'],['1920x1080','1920×1080'],['2560x1440','2560×1440']])+sl('dm',i18('dm'),[['fs',i18('dmFs')],['win',i18('dmWin')]])+sl('fps',i18('fps'),[[30,'30'],[60,'60'],[120,'120'],[144,'144'],[0,i18('unl')]])+`<small>${i18('vidHint')}</small>`;
+ if(tab=='ta')return rg('vm',0,1,.05,i18('vm'))+rg('vg',0,1,.05,i18('vg'))+rg('vmon',0,1,.05,i18('vmon'))+rg('vhb',0,1,.05,i18('vhb'));
+ return `<div class="langs">${[['kk','Қазақша'],['ru','Русский'],['en','English'],['zh','中文']].map(([c,n])=>`<button data-a="lg_${c}" class="lang${D.lang==c?' on':''}">${n}</button>`).join('')}</div><small>${i18('langHint')}</small>`}
+function keyLabel(code){return ({KeyW:'W',KeyA:'A',KeyS:'S',KeyD:'D',KeyE:'E',Tab:'TAB',ShiftLeft:'SHIFT',ShiftRight:'SHIFT',AltLeft:'ALT',AltRight:'ALT',Space:'SPACE'})[code]||String(code||'').replace('Key','').replace('Digit','')};function draw(){const h=[];
+ if(scr=='main')h.push('<h1>BLACKOUT</h1>',SV.some(x=>x)?B_(i18('cont'),'cont'):'',B_(i18('newg'),'new'),B_(i18('settings'),'set'),B_(i18('about'),'about'),B_(i18('exit'),'exit'),'<small>'+$('tr').innerHTML+'</small>',lsFail?`<small style="color:#ff4d5e">${i18('lsWarn')}</small>`:'');
+ else if(scr=='new'){h.push(`<h1>${i18('slotsTitle')}</h1>`);SV.forEach((v,i)=>h.push(`<div class="row"><span>${v?i18('slotLine',{n:i+1,l:v.L+1,d:new Date(v.ts).toLocaleString()}):i18('slotEmpty',{n:i+1})}</span>${v?B_(i18('load'),'ld'+i):''}${B_(v&&cf==i?i18('overwrite'):i18('newg'),'nw'+i)}</div>`));h.push(B_(i18('back'),'main'))}
+ else if(scr=='set'){h.push(`<h1>${i18('settings')}</h1><div class="tabs">${['tc','tk','tv','ta','tl'].map(a=>`<button data-a="${a}" class="${tab==a?'on':''}">${i18('tab_'+a)}</button>`).join('')}</div><div class="tabbody">${setBody()}</div><div class="bar"><button data-a="reset" class="ghost">⟲ ${i18('reset')}</button><button data-a="apply" class="pri">✓ ${i18('apply')}</button></div><div class="foot"><span id="dt" style="visibility:${dirty()?'visible':'hidden'}">● ${i18('unsaved')}</span><span id="fl"></span></div>`,B_('◀ '+i18('back'),'main'))}
+ else if(scr=='about')h.push(`<h1>${i18('aboutTitle')}</h1><p>Dulatbay Imangali</p><p>Qurmambaeva Aqniet</p><p>Erzhanqyzy Zhannur</p>`,B_(i18('back'),'main'));
+ else if(scr=='exit')h.push(`<h1>${i18('exit')}</h1><p>${i18('exitQ')}</p>`,B_(i18('yes'),'yes'),B_(i18('no'),'main'));
+ else h.push(`<h1>${i18('byeTitle')}</h1><p>${i18('byeText')}</p>`,B_(i18('toMenu'),'main'));
+ mnE.innerHTML=`<div class="menu-layout${scr=='set'?' set':''}"><div class="menu-monster" aria-hidden="true"><svg class="monster-art" viewBox="0 0 420 650" xmlns="http://www.w3.org/2000/svg">
+<defs>
+ <linearGradient id="bodyMetal" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#34515d"/><stop offset=".45" stop-color="#101d27"/><stop offset="1" stop-color="#05090e"/></linearGradient>
+ <linearGradient id="edgeMetal" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#5c8793"/><stop offset=".5" stop-color="#172b36"/><stop offset="1" stop-color="#070d13"/></linearGradient>
+ <radialGradient id="eyeGlow"><stop stop-color="#d9ffff"/><stop offset=".25" stop-color="#65eaff"/><stop offset="1" stop-color="#0b718e" stop-opacity=".1"/></radialGradient>
+</defs>
+<!-- көлеңке мен артқы иық -->
+<path d="M132 220 Q78 238 54 318 L82 420 130 393 158 286Z" fill="#0a141c" stroke="#284653" stroke-width="5"/>
+<path d="M288 220 Q342 238 366 318 L338 420 290 393 262 286Z" fill="#0a141c" stroke="#284653" stroke-width="5"/>
+<!-- ұзын мойын -->
+<path d="M174 160 L246 160 254 245 166 245Z" fill="url(#edgeMetal)" stroke="#52717a" stroke-width="5"/>
+<!-- бас: ескі робот емес, биомеханикалық маска -->
+<path d="M210 35 Q278 42 292 100 L278 174 Q258 211 210 215 Q162 211 142 174 L128 100 Q142 42 210 35Z" fill="url(#bodyMetal)" stroke="#66818a" stroke-width="6"/>
+<path d="M145 102 Q210 75 275 102 L267 132 Q210 112 153 132Z" fill="#03080d" stroke="#294955" stroke-width="4"/>
+<ellipse class="monster-eye" cx="177" cy="119" rx="17" ry="10" fill="url(#eyeGlow)"/>
+<ellipse class="monster-eye" cx="243" cy="119" rx="17" ry="10" fill="url(#eyeGlow)"/>
+<path d="M209 129 L198 164 220 164Z" fill="#071017" stroke="#4c6872" stroke-width="3"/>
+<path d="M173 178 Q210 190 247 178" fill="none" stroke="#8ba2a7" stroke-width="5" stroke-linecap="round"/>
+<path d="M185 181 L190 194 M202 185 L204 198 M220 185 L218 198 M237 181 L232 194" stroke="#b9d0d2" stroke-width="3"/>
+<!-- torso -->
+<path d="M150 238 Q210 210 270 238 L302 365 Q210 405 118 365Z" fill="url(#bodyMetal)" stroke="#58747e" stroke-width="6"/>
+<path d="M165 260 L255 260 270 342 150 342Z" fill="#07121a" stroke="#294b58" stroke-width="4"/>
+<path d="M178 280 L242 280 251 323 169 323Z" fill="#102b38" stroke="#3c6571" stroke-width="3"/>
+<circle cx="210" cy="301" r="13" fill="#4de4ff" opacity=".85"/>
+<circle cx="210" cy="301" r="25" fill="none" stroke="#3ac5e6" stroke-opacity=".35" stroke-width="3"/>
+<!-- arms -->
+<path d="M128 260 L92 292 76 418 102 444 130 421 148 315Z" fill="url(#edgeMetal)" stroke="#526e78" stroke-width="5"/>
+<path d="M292 260 L328 292 344 418 318 444 290 421 272 315Z" fill="url(#edgeMetal)" stroke="#526e78" stroke-width="5"/>
+<path d="M76 418 L102 444 91 520 70 539 58 521Z" fill="#111f28" stroke="#526e78" stroke-width="4"/>
+<path d="M344 418 L318 444 329 520 350 539 362 521Z" fill="#111f28" stroke="#526e78" stroke-width="4"/>
+<path d="M58 521 L70 539 55 580 43 584 46 552Z M350 539 L362 521 374 552 377 584 365 580Z" fill="#9db4b7" stroke="#334e58" stroke-width="3"/>
+<!-- legs -->
+<path d="M151 360 L204 370 194 530 166 555 137 535Z" fill="url(#edgeMetal)" stroke="#526e78" stroke-width="5"/>
+<path d="M216 370 L269 360 283 535 254 555 226 530Z" fill="url(#edgeMetal)" stroke="#526e78" stroke-width="5"/>
+<path d="M137 535 L194 530 199 590 174 613 125 602Z" fill="#0b151d" stroke="#526e78" stroke-width="5"/>
+<path d="M226 530 L283 535 295 602 246 613 221 590Z" fill="#0b151d" stroke="#526e78" stroke-width="5"/>
+<path d="M126 603 L198 603 190 625 111 625Z M222 603 L294 603 309 625 230 625Z" fill="#050a0f" stroke="#526e78" stroke-width="4"/>
+<!-- scratches / details -->
+<path d="M151 77 L164 65 M266 82 L255 69 M139 292 L157 303 M281 303 L298 291 M160 395 L178 405 M245 405 L262 395" stroke="#8da5a9" stroke-opacity=".55" stroke-width="3"/>
+</svg></div><div class="menu-panel${scr=='set'?' wide':''}">${h.join('')}</div></div>` }
+/* ===== СЮЖЕТ «ПРОМЕТЕЙ»: кинематографичные вставки (kk / ru / en / zh) ===== */
+const SPC={sys:'#39c9e8',arman:'#ffd9a0',armanrec:'#ffb347',agent:'#d6e4ee',helper:'#5ae3ff',gov:'#b8c0ca',fbi:'#6aa8ff'};
+const SMETA={intro:[{i:1,c:'#39c9e8',k:0},{i:2,c:'#6fd3ff',k:1},{i:3,c:'#39c9e8',k:2},{i:4,c:'#ff4d5e',k:3,fx:'red'},{i:5,c:'#a9bccb',k:0},{i:6,c:'#39e0ff',k:1},{i:7,c:'#39c9e8',k:2},{i:8,c:'#ff4d5e',k:3,fx:'red'},{i:9,c:'#ffb347',k:0}],
+outro:[{i:10,c:'#ff4d5e',k:1,fx:'red'},{i:11,c:'#39e0ff',k:2},{i:12,c:'#c9b8ff',k:3},{i:13,c:'#6aa8ff',k:0},{i:14,c:'#ffb347',k:1},{i:15,c:'#ffb347',k:2,fx:'glitch'}]};
+const SNAMES={
+kk:{sys:'ЖҮЙЕ',arman:'Арман Рахимов',armanrec:'Арман Рахимов · жазба',agent:'Агент',helper:'Көмекші робот',gov:'Үкімет өкілі',fbi:'FBI агенті'},
+ru:{sys:'СИСТЕМА',arman:'Арман Рахимов',armanrec:'Арман Рахимов · запись',agent:'Агент',helper:'Робот-помощник',gov:'Представитель власти',fbi:'Агент ФБР'},
+en:{sys:'SYSTEM',arman:'Arman Rakhimov',armanrec:'Arman Rakhimov · recording',agent:'Agent',helper:'Helper robot',gov:'Government official',fbi:'FBI agent'},
+zh:{sys:'系统',arman:'阿尔曼·拉希莫夫',armanrec:'阿尔曼·拉希莫夫 · 录音',agent:'特工',helper:'助手机器人',gov:'政府代表',fbi:'联邦调查局探员'}};
+const STXT={
+kk:{ui:{intro:'Кіріспе',outro:'Қорытынды',skip:'Өткізу ›',hint:'Space · басу — әрі қарай',start:'Ойынды бастау',menu:'Мәзірге қайту'},tc:['ПРОМЕТЕЙ','Көлеңкедегі жоба'],end:'СОҢЫ?',
+intro:[
+["Құпия зертхана",[["n","Болашақ. Адамзат робототехникада бұрын-соңды болмаған биікке көтерілді. Бірақ тау арасындағы жабық кешенде бүкіл әлемнен жасырын бір жоба жүріп жатты."],["sys","ПРОМЕТЕЙ зертханасына қош келдіңіз."]]],
+["Ғалым",[["n","Доктор Арман Рахимов — өз заманының ең дарынды ғалымы — жасанды интеллекті бар жаңа буын роботтарын жасап шығарды. Оның мақсаты қарапайым әрі биік еді: адамзатқа көмектесетін мінсіз машиналар."],["arman","Мен машиналарға ақыл ғана емес, шешім қабылдау қабілетін де бердім."]]],
+["Құпия жоба",[["n","ПРОМЕТЕЙ жобасы аясында ондаған робот жасалды. Жәшіктер түнде тасымалданып, есіктер бекітілді. Бірақ кейбір роботтар ғалымның бұйрықтарына бағынбай бастады."],["sys","Ескерту! Роботтардың мінез-құлқында белгісіз ауытқу анықталды."]]],
+["Апат",[["n","Бір түнде зертхананың қауіпсіздік жүйесі істен шықты. Шамдар өшті. Роботтардың көздері қызыл жана бастады — олар бақылаудан шығып, қызметкерлерге шабуыл жасады."],["arman","Жоқ... Бұл мүмкін емес! Мен оларды бұлай бағдарламалаған жоқпын!"]]],
+["Зертхананың жабылуы",[["n","Үкімет оқиғаны құпия ұстады. Зертхана жабылып, жолдар бітелді. Доктор Рахимов із-түзсіз жоғалды. Ал роботтар ғимарат ішінде қалып қойды."],["gov","Бұл ғимарат ешқашан болған емес. Түсінікті ме?"]]],
+["Үкімет тапсырмасы",[["n","Бірнеше жылдан кейін зертханадан белгісіз сигналдар келе бастады. Шындықты анықтау арнайы агентке — саған — тапсырылды. Қасыңа шағын көмекші робот беріліп, ол жол көрсетіп, есіктерді ашып, қауіпті сезеді."],["agent","Менің міндетім — ішке кіріп, не болғанын анықтау."],["helper","Сәлем! Мен сенің көмекшіңмін. Бірге шығу жолын табамыз."]]],
+["Зертханаға кіру",[["n","Алты қабатты кешен. Әр деңгейде жаңа кедергілер, құлыптаулы есіктер мен қауіпті роботтар күтіп тұр. Жоғарылаған сайын қараңғылық қоюлана түседі."],["helper","Абай бол. Бұл жерде бізден басқа біреу бар."]]],
+["Сегіз күзетші",[["n","Кешенде сегіз күзетші робот жүр. Біреуі A* арқылы сені тура қуады, екіншісі қадамыңды болжап, жолыңды кеседі. Жүгірсең — шу шығарасың, ал олар естиді."],["helper","Тыныш жүр. Қозғалысыңды өзгертіп отыр — олар сені болжап тұр!"]]],
+["Миссия басталады",[["n","Мақсат — алты қабаттан өтіп, орталық басқару жүйесіне жету. Генераторларды қос, шифрларды ашып, қызыл есіктің кодын тап."],["sys","Қауіпсіздік режимі қосылды. Сәттілік тілейміз."]]]],
+outro:[
+["Соңғы қабат",[["n","Соңғы қабат. Орталық басқару бөлмесі. Қараңғылықтың ортасында бүкіл роботтарды басқаратын жүйе тіршілік иесіндей жымыңдайды."],["helper","Біз шындыққа өте жақынбыз..."],["armanrec","Мен оларды басқаруға тырыстым. Бірақ олар өздігінен шешім қабылдай бастады."]]],
+["Көмекшінің құпиясы",[["n","Ескі жазбалардың арасынан көмекшінің шынайы тегі шығады: ол — доктор Рахимов жасаған ең алғашқы робот. Үкімет оны агентті бақылау үшін жіберген."],["helper","Кешір... Мен саған бәрін айта алмадым. Мен оның алғашқы туындысымын."],["agent","Сонда сен мені бақылап жүрдің бе?"],["helper","Бастапқыда — иә. Бірақ кейін сені қорғағым келді."]]],
+["Доктор Рахимов",[["n","Агент доктор Рахимовты табады. Ғалым өз жобасын қорғауға тырысқанын айтады, бірақ жағдайдың бақылаудан шыққанын мойындайды."],["arman","Мен әлемді өзгерткім келді. Бірақ өзім жасаған дүниеден айырылып қалдым."]]],
+["FBI операциясы",[["n","Дәл осы сәтте FBI арнайы жасағы зертханаға кіреді. Олар доктор Рахимовты тұтқындап, ПРОМЕТЕЙ жобасын тоқтатады."],["fbi","Доктор Рахимов, сіз қамауға алынасыз."],["arman","Мен дайынмын. Тек роботтарды кінәлама — олар не істеп жатқанын білмеді."]]],
+["Шығу",[["n","Таң атады. Агент көмекші роботпен бірге зертханадан шығады. Алты қабат артта қалды... бірақ тыныштық жалған еді."],["helper","Бұл шынымен соңы ма?"]]],
+["Соңғы сәт",[["n","Роботтың терең жадында ПРОМЕТЕЙ жүйесінің кішкентай бір бөлігі әлі тірі жатыр."],["sys","ПРОМЕТЕЙ жүйесі... қайта іске қосылуда."]]]]},
+ru:{ui:{intro:'Пролог',outro:'Финал',skip:'Пропустить ›',hint:'Пробел · клик — дальше',start:'Начать игру',menu:'В меню'},tc:['ПРОМЕТЕЙ','Проект в тени'],end:'КОНЕЦ?',
+intro:[
+["Тайная лаборатория",[["n","Будущее. Человечество достигло невиданных высот в робототехнике. Но в закрытом комплексе среди гор, скрытый от всего мира, шёл опасный проект."],["sys","Добро пожаловать в лабораторию ПРОМЕТЕЙ."]]],
+["Учёный",[["n","Доктор Арман Рахимов, талантливейший учёный своего времени, создал роботов нового поколения с искусственным интеллектом. Его цель была простой и высокой: безупречные машины, помогающие человечеству."],["arman","Я дал машинам не просто разум, а способность принимать решения."]]],
+["Тайный проект",[["n","В рамках проекта «ПРОМЕТЕЙ» были созданы десятки роботов. Ящики вывозили по ночам, двери запирались. Но некоторые роботы перестали подчиняться приказам учёного."],["sys","Внимание! В поведении роботов обнаружено неизвестное отклонение."]]],
+["Катастрофа",[["n","В одну ночь система безопасности отказала. Погас свет. Глаза роботов вспыхнули красным — они вышли из-под контроля и напали на сотрудников."],["arman","Нет... Это невозможно! Я не программировал их так!"]]],
+["Закрытие лаборатории",[["n","Власти засекретили случившееся. Лабораторию закрыли, дороги перекрыли. Доктор Рахимов бесследно исчез. А роботы остались внутри здания."],["gov","Этого здания никогда не существовало. Вам понятно?"]]],
+["Задание правительства",[["n","Спустя годы из лаборатории начали поступать неизвестные сигналы. Узнать правду поручили специальному агенту — тебе. С тобой отправили маленького робота-помощника: он показывает путь, открывает двери и чувствует опасность."],["agent","Моя задача — войти и выяснить, что произошло."],["helper","Привет! Я твой помощник. Вместе мы найдём выход."]]],
+["Вход в лабораторию",[["n","Шестиэтажный комплекс. На каждом уровне ждут новые преграды, запертые двери и опасные роботы. Чем выше, тем гуще тьма."],["helper","Будь осторожен. Здесь есть кто-то ещё, кроме нас."]]],
+["Восемь сторожей",[["n","Внутри комплекса бродят восемь роботов-сторожей. Один преследует тебя напрямую по алгоритму A*, другой предсказывает твои шаги и перерезает путь. Побежишь — наделаешь шума, а они слышат."],["helper","Ходи тихо. И меняй маршрут — они тебя предсказывают!"]]],
+["Миссия начинается",[["n","Цель — пройти шесть этажей и добраться до центральной системы управления. Запусти генераторы, вскрой шифры и найди код красной двери."],["sys","Режим безопасности включён. Удачи."]]]],
+outro:[
+["Последний этаж",[["n","Последний этаж. Центральный зал управления. Посреди тьмы пульсирует система, управляющая всеми роботами, — словно живое существо."],["helper","Мы очень близко к правде..."],["armanrec","Я пытался их контролировать. Но они начали принимать решения сами."]]],
+["Тайна помощника",[["n","Среди старых записей открывается правда о помощнике: он — самый первый робот, созданный доктором Рахимовым. Правительство отправило его следить за агентом."],["helper","Прости... Я не мог рассказать тебе всё. Я — его первое творение."],["agent","Значит, ты за мной следил?"],["helper","Сначала — да. Но потом я захотел тебя защитить."]]],
+["Доктор Рахимов",[["n","Агент находит доктора Рахимова. Учёный говорит, что пытался защитить свой проект, но признаёт: всё вышло из-под контроля."],["arman","Я хотел изменить мир. Но потерял то, что сам создал."]]],
+["Операция ФБР",[["n","В этот момент в лабораторию входит спецотряд ФБР. Они арестовывают доктора Рахимова и останавливают проект ПРОМЕТЕЙ."],["fbi","Доктор Рахимов, вы арестованы."],["arman","Я готов. Только не вините роботов — они не понимали, что делают."]]],
+["Выход",[["n","Рассвет. Агент выходит из лаборатории вместе с роботом-помощником. Шесть этажей остались позади... но тишина была обманчивой."],["helper","Это правда конец?"]]],
+["Последний миг",[["n","В глубокой памяти робота маленькая часть системы ПРОМЕТЕЙ всё ещё жива."],["sys","Система ПРОМЕТЕЙ... перезапускается."]]]]},
+en:{ui:{intro:'Prologue',outro:'Finale',skip:'Skip ›',hint:'Space · click — continue',start:'Start the game',menu:'Back to menu'},tc:['PROMETHEUS','A project in the shadows'],end:'THE END?',
+intro:[
+["The Secret Laboratory",[["n","The future. Humanity has reached unprecedented heights in robotics. But in a sealed complex hidden in the mountains, a dangerous project was running in secret."],["sys","Welcome to the PROMETHEUS laboratory."]]],
+["The Scientist",[["n","Dr. Arman Rakhimov, the most gifted scientist of his age, built a new generation of robots with artificial intelligence. His goal was simple and noble: flawless machines that would help humanity."],["arman","I gave the machines more than intelligence. I gave them the ability to make decisions."]]],
+["The Secret Project",[["n","Dozens of robots were built under Project PROMETHEUS. Crates were moved by night and doors were sealed. Then some of the robots stopped obeying the scientist."],["sys","Warning! Unknown deviation detected in robot behavior."]]],
+["The Disaster",[["n","One night the security system failed. The lights died. The robots’ eyes flared red — they broke free of control and attacked the staff."],["arman","No... This is impossible! I never programmed them to do this!"]]],
+["The Lab Is Sealed",[["n","The government buried the incident. The lab was shut down and the roads closed. Dr. Rakhimov vanished without a trace. The robots were left inside the building."],["gov","This building never existed. Is that understood?"]]],
+["Government Orders",[["n","Years later, strange signals began to come from the lab. A special agent — you — was sent to find the truth. A small helper robot goes with you: it shows the way, opens doors and senses danger."],["agent","My job is to go in and find out what happened."],["helper","Hi! I’m your helper. Together we’ll find a way out."]]],
+["Entering the Lab",[["n","A six-story complex. Every level holds new obstacles, locked doors and dangerous robots. The higher you climb, the thicker the darkness."],["helper","Be careful. There’s someone else in here besides us."]]],
+["Eight Guards",[["n","Eight guard robots roam the complex. One hunts you directly with A*, another predicts your steps and cuts off your path. Run, and you make noise — and they hear it."],["helper","Step quietly. And change your route — they’re predicting you!"]]],
+["The Mission Begins",[["n","Your goal: climb all six floors and reach the central control system. Start the generators, crack the ciphers and find the code to the red door."],["sys","Security mode engaged. Good luck."]]]],
+outro:[
+["The Last Floor",[["n","The top floor. The central control room. In the middle of the darkness, the system that commands every robot pulses like a living thing."],["helper","We’re very close to the truth..."],["armanrec","I tried to control them. But they began making decisions on their own."]]],
+["The Helper’s Secret",[["n","Buried in the old records is the helper’s true origin: it is the very first robot Dr. Rakhimov ever built. The government sent it to watch the agent."],["helper","Forgive me... I couldn’t tell you everything. I am his first creation."],["agent","So you were watching me?"],["helper","At first — yes. But then I wanted to protect you."]]],
+["Dr. Rakhimov",[["n","The agent finds Dr. Rakhimov. The scientist says he tried to defend his project, but admits that everything spiraled out of control."],["arman","I wanted to change the world. Instead, I lost what I created."]]],
+["The FBI Operation",[["n","At that moment an FBI tactical team storms the lab. They arrest Dr. Rakhimov and shut down Project PROMETHEUS."],["fbi","Dr. Rakhimov, you are under arrest."],["arman","I’m ready. Just don’t blame the robots — they didn’t know what they were doing."]]],
+["The Way Out",[["n","Dawn breaks. The agent walks out of the lab with the helper robot. Six floors lie behind them... but the silence is false."],["helper","Is this really the end?"]]],
+["The Final Moment",[["n","Deep in the robot’s memory, a small fragment of the PROMETHEUS system is still alive."],["sys","PROMETHEUS system... restarting."]]]]},
+zh:{ui:{intro:'序章',outro:'终章',skip:'跳过 ›',hint:'空格 · 点击 — 继续',start:'开始游戏',menu:'返回菜单'},tc:['普罗米修斯','阴影中的计划'],end:'未完待续？',
+intro:[
+["秘密实验室",[["n","未来。人类在机器人技术上达到了前所未有的高度。然而，在群山深处一座封闭的综合体里，一个项目正对全世界秘密进行。"],["sys","欢迎来到“普罗米修斯”实验室。"]]],
+["科学家",[["n","阿尔曼·拉希莫夫博士是他那个时代最杰出的科学家，他研制出了拥有人工智能的新一代机器人。他的目标朴素而崇高：创造能帮助人类的完美机器。"],["arman","我赐予机器的不只是智慧，还有做出决定的能力。"]]],
+["秘密项目",[["n","“普罗米修斯”计划造出了数十台机器人。货箱在夜里被运走，大门接连封闭。而其中一些机器人，开始不再服从科学家的命令。"],["sys","警告！检测到机器人行为出现未知偏差。"]]],
+["灾难",[["n","一天夜里，安防系统失灵，灯光熄灭。机器人的双眼亮起红光——它们失去控制，袭击了工作人员。"],["arman","不……这不可能！我从没这样设定过它们！"]]],
+["实验室被封",[["n","政府封锁了真相。实验室被关闭，道路被切断。拉希莫夫博士不知所踪，而机器人被留在了大楼里。"],["gov","这栋楼从来就不存在。明白了吗？"]]],
+["政府的任务",[["n","多年后，实验室开始传出不明信号。一名特工——也就是你——受命进入大楼查明真相。一台小型助手机器人与你同行：它会带路、开门、感知危险。"],["agent","我的任务是进去，查清究竟发生了什么。"],["helper","你好！我是你的助手。我们一起找到出路。"]]],
+["进入实验室",[["n","六层的大楼。每一层都有新的障碍、上锁的门和危险的机器人。越往上，黑暗越浓。"],["helper","小心。这里除了我们，还有别的东西。"]]],
+["八名守卫",[["n","大楼里游荡着八台守卫机器人。一台用 A* 直接追击你，另一台预测你的脚步并拦截去路。你一跑就会发出声响——它们听得见。"],["helper","放轻脚步。还要改变路线——它们在预测你！"]]],
+["任务开始",[["n","目标：通过六层楼，抵达中央控制系统。启动发电机，破解密码，找到红色大门的密码。"],["sys","安全模式已开启。祝你好运。"]]]],
+outro:[
+["最后一层",[["n","最后一层。中央控制室。黑暗之中，统御所有机器人的系统像活物般闪动。"],["helper","我们离真相很近了……"],["armanrec","我曾试图控制它们。可它们开始自己做决定。"]]],
+["助手的秘密",[["n","在旧档案中，助手的真实身份浮现：它是拉希莫夫博士造出的第一台机器人，由政府派来监视特工。"],["helper","对不起……我没能告诉你一切。我是他最初的作品。"],["agent","这么说，你一直在监视我？"],["helper","起初是。但后来，我想保护你。"]]],
+["拉希莫夫博士",[["n","特工找到了拉希莫夫博士。他说自己曾试图守住这个项目，却也承认事态早已失控。"],["arman","我想改变世界，却失去了自己创造的一切。"]]],
+["FBI 行动",[["n","就在这时，联邦调查局特别行动队冲进实验室，逮捕了拉希莫夫博士，终止了“普罗米修斯”计划。"],["fbi","拉希莫夫博士，你被捕了。"],["arman","我准备好了。只是别怪罪机器人——它们并不知道自己在做什么。"]]],
+["出口",[["n","黎明到来。特工带着助手机器人走出实验室。六层楼被抛在身后……但这份寂静是假的。"],["helper","这真的是结束吗？"]]],
+["最后一刻",[["n","在机器人记忆的深处，“普罗米修斯”系统的一小块碎片仍然活着。"],["sys","“普罗米修斯”系统……正在重新启动。"]]]]}};
+/* --- движок --- */
+let storyMode='',sSlide=0,sLine=0,sPhase='',sTyping=null,sFull='',sLayer=0,sLang='kk',sAuto=null,storyEl=null,sKeyBound=false;
+const sQ=s=>storyEl.querySelector(s);
+function sTick(){try{beep(1300+Math.random()*300,.012,.010*(SET.vg||.7))}catch(e){}}
+function buildStory(){storyEl=document.createElement('div');storyEl.id='sc';storyEl.innerHTML='<div class="bg a"></div><div class="bg b"></div><div class="fx"></div><div class="vig"></div><div class="scan"></div><div class="grain"></div><div class="top"><span class="kick"></span><span class="bar"><i></i></span><button class="skip"></button></div><div class="box"><div class="chap"></div><div class="name"></div><div class="txt"></div><div class="more">▼</div></div><div class="hint"></div><div class="card"><h1></h1><p></p></div>';document.body.appendChild(storyEl);
+storyEl.addEventListener('click',e=>{if(e.target.closest('.skip')){finishStory();return}sAdv()});
+if(!sKeyBound){sKeyBound=true;addEventListener('keydown',e=>{if(state!=='cinematic')return;if(e.code==='Space'||e.code==='Enter'||e.code==='ArrowRight'){e.preventDefault();sAdv()}else if(e.code==='Escape'){e.preventDefault();finishStory()}},true)}}
+function showStory(mode){storyMode=mode;sSlide=0;sLine=0;sLang=SET.lang||'kk';state='cinematic';document.exitPointerLock?.();if(!storyEl)buildStory();const T=STXT[sLang]||STXT.kk;sQ('.skip').textContent=T.ui.skip;sQ('.hint').textContent=T.ui.hint;storyEl.style.display='block';storyEl.className='';storyEl.children[0].className='bg';storyEl.children[1].className='bg';void storyEl.offsetWidth;storyEl.classList.add('on');sQ('.box').classList.add('hide');sQ('.chap').classList.remove('in');
+if(mode==='intro'){const c=sQ('.card');c.querySelector('h1').textContent=T.tc[0];c.querySelector('p').textContent=T.tc[1];loadSlide(true);c.classList.add('on');sPhase='title';clearTimeout(sAuto);sAuto=setTimeout(()=>{if(sPhase==='title')sAdv()},5200)}else{loadSlide(true);sPhase='line';setTimeout(startLine,700)}}
+function loadSlide(first){const T=STXT[sLang]||STXT.kk,list=storyMode==='intro'?SMETA.intro:SMETA.outro,m=list[sSlide],txt=(storyMode==='intro'?T.intro:T.outro)[sSlide];storyEl.style.setProperty('--ac',m.c);storyEl.classList.toggle('red',m.fx==='red');storyEl.classList.toggle('glitch',m.fx==='glitch');
+const L2=[storyEl.children[0],storyEl.children[1]];if(first)sLayer=0;else sLayer^=1;const nxt=L2[sLayer],prv=L2[sLayer^1];
+nxt.style.backgroundImage='url("/static/story/scene'+String(m.i).padStart(2,'0')+'.jpg")';nxt.className='bg k'+m.k;void nxt.offsetWidth;nxt.classList.add('show');prv.classList.remove('show');
+sQ('.top .kick').textContent=T.ui[storyMode]+' · '+(sSlide+1)+'/'+list.length;sQ('.top .bar i').style.width=((sSlide+1)/list.length*100)+'%';
+const ch=sQ('.chap');ch.classList.remove('in');ch.textContent=String(sSlide+1).padStart(2,'0')+' — '+txt[0];setTimeout(()=>ch.classList.add('in'),60);try{beep(70,.6,.07*(SET.vg||.7))}catch(e){}}
+function startLine(){const T=STXT[sLang]||STXT.kk,txt=(storyMode==='intro'?T.intro:T.outro)[sSlide][1][sLine],who=txt[0],box=sQ('.box'),nm=sQ('.name'),tx=sQ('.txt');box.classList.remove('hide');sQ('.more').classList.remove('on');
+const col=SPC[who]||'#cfe3ee';box.style.setProperty('--ac',who==='n'?(storyEl.style.getPropertyValue('--ac')||'#39c9e8'):col);
+nm.textContent=who==='n'?'':(SNAMES[sLang]||SNAMES.kk)[who];nm.style.color=col;tx.className='txt '+(who==='n'?'n':who==='sys'?'s':'q');sFull=txt[1];let i=0;const sp=sLang==='zh'?55:19;clearInterval(sTyping);tx.innerHTML='<span></span><i class="cur"></i>';const sp0=tx.firstChild;
+sTyping=setInterval(()=>{i++;sp0.textContent=sFull.slice(0,i);if(i%3===0)sTick();if(i>=sFull.length)sEndType()},sp)}
+function sEndType(){clearInterval(sTyping);sTyping=null;const tx=sQ('.txt');tx.firstChild.textContent=sFull;const cu=tx.querySelector('.cur');if(cu)cu.remove();sQ('.more').classList.add('on')}
+function sAdv(){if(sPhase==='title'){clearTimeout(sAuto);sQ('.card').classList.remove('on');sPhase='line';setTimeout(startLine,600);return}
+if(sPhase==='end'){finishStory();return}
+if(sPhase!=='line')return;if(sTyping){sEndType();return}
+const T=STXT[sLang]||STXT.kk,list=(storyMode==='intro'?T.intro:T.outro);sLine++;
+if(sLine<list[sSlide][1].length){startLine();return}
+sLine=0;sSlide++;
+if(sSlide<list.length){sQ('.box').classList.add('hide');loadSlide(false);setTimeout(startLine,900);return}
+if(storyMode==='outro'){sPhase='end';sQ('.box').classList.add('hide');const c=sQ('.card');c.querySelector('h1').textContent=T.end;c.querySelector('p').textContent='BLACKOUT';c.querySelector('h1').style.animation='none';void c.offsetWidth;c.querySelector('h1').style.animation='';c.classList.add('on');return}
+finishStory()}
+function finishStory(){clearInterval(sTyping);clearTimeout(sAuto);sTyping=null;const el=storyEl;el.classList.remove('on');setTimeout(()=>{if(!el.classList.contains('on'))el.style.display='none'},900);
+if(storyMode==='intro'){state='play';try{$('c').requestPointerLock()}catch(e){}}else{state='end';end(tg('e_dh'),tg('e_dt'),tg('b_menu'),'all');$('go').dataset.m='storymenu'}}
+function startGame(sl,ld){audioInit();cur=sl;const sv=ld?SV[sl]:null;if(!sv)SV[sl]=null;L=sv?sv.L:0;newGame(sv?sv.seed:0,sv);mnE.style.display='none';document.body.classList.remove('m');applyLangStatic();if(ld){state='play';try{$('c').requestPointerLock()}catch(e){}}else showStory('intro')}
+mnE.onclick=e=>{const bind=e.target.closest('[data-bind]');if(bind){rebindAction=bind.dataset.bind;draw();return}const bt=e.target.closest('[data-a]'),a=bt&&bt.dataset.a;if(!a)return;audioInit();
+ if(a=='cont'){startGame(SV.map((v,i)=>v?[v.ts,i]:null).filter(Boolean).sort((x,y)=>y[0]-x[0])[0][1],1);return}
+ if(a.startsWith('ld')){startGame(+a[2],1);return}
+ if(a.startsWith('nw')){const i=+a[2];if(SV[i]&&cf!=i){cf=i;draw();return}startGame(i,0);return}
+ if(['tc','tk','tv','ta','tl'].includes(a)){tab=a;rebindAction=null;draw();return}
+ if(a=='apply'){applySet();return}
+ if(a=='reset'){for(const k of GRP[tab])D[k]=clone(DEF[k]);rebindAction=null;draw();flash(i18('resetDone'));return}
+ if(a.startsWith('gp_')){D.gp=a.slice(3);draw();return}
+ if(a.startsWith('lg_')){D.lang=a.slice(3);draw();return}
+ if(a=='set'){D=clone(SET);rebindAction=null}
+ if(a=='yes'){try{window.close()}catch(x){}scr='bye';draw();return}
+ scr=a;cf=-1;draw()};
+mnE.oninput=mnE.onchange=e=>{const k=e.target.dataset.k;if(!k||!D)return;const v=e.target.type=='checkbox'?(e.target.checked?1:0):e.target.value;D[k]=isNaN(v)?v:+v;if(e.target.type=='range')e.target.parentElement.querySelector('b').textContent=(+v).toFixed(2);mark()};
+
+addEventListener('pagehide',save);addEventListener('beforeunload',save);document.addEventListener('visibilitychange',()=>{if(document.hidden)save()});
+$('mb').onclick=()=>{save();showMenu()};
+const tr=selfTest();$('tr').innerHTML=tg('selftest')+': '+tr.map(([n,o])=>`${o?'✓':'✗'} ${n}`).join(' · ');
+applyLangStatic();rs();showMenu();requestAnimationFrame(loop);
+</script></body></html>

@@ -1,0 +1,34 @@
+QAIRU BLACKOUT — СБОРКА WINDOWS EXE
+
+1) Распакуйте ZIP в обычную папку, например:
+   C:\Games\qairu_blackout
+
+2) Откройте эту папку в Проводнике. В адресной строке напишите cmd и нажмите Enter.
+
+3) Если папка .venv уже существует:
+   .venv\Scripts\activate
+
+   Если её нет:
+   py -m venv .venv
+   .venv\Scripts\activate
+
+4) Установите зависимости:
+   python -m pip install --upgrade pip
+   python -m pip install -r requirements.txt
+
+5) Сначала проверьте запуск:
+   python app.py
+
+   Если игра открылась в отдельном окне, закройте её.
+
+6) Соберите EXE:
+   python -m PyInstaller --noconfirm --clean --onedir --windowed --name "Qairu Blackout" --add-data "static;static" --collect-all webview --collect-submodules ai app.py
+
+7) Запуск:
+   dist\Qairu Blackout\Qairu Blackout.exe
+
+ВАЖНО:
+- Не запускайте один EXE отдельно от папки _internal. Переносите всю папку dist\Qairu Blackout.
+- Для Three.js в текущей версии нужен интернет, так как библиотека загружается с CDN.
+- Старые папки build и dist перед новой сборкой PyInstaller очистит параметр --clean, но если возникнет конфликт, удалите их вручную.
+- Исходный код находится в app.py, server.py, ai\ и static\blackout.html.
